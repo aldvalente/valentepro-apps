@@ -1,10 +1,13 @@
 """Database connection and session management"""
 import os
 import socket
+import logging
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 from contextlib import contextmanager
 from db.models import Base
+
+logger = logging.getLogger(__name__)
 
 # Get database URL from environment or construct from parts
 def get_database_url():
@@ -28,7 +31,7 @@ def get_database_url():
         try:
             socket.create_connection((host, int(port)), timeout=2)
         except (socket.error, socket.timeout):
-            print(f"⚠️ Cannot connect to PostgreSQL at {host}:{port}, using SQLite")
+            logger.warning(f"Cannot connect to PostgreSQL at {host}:{port}, using SQLite")
             return 'sqlite:///./sportbnb.db'
     
     return f"postgresql://{user}:{password}@{host}:{port}/{database}"
@@ -43,7 +46,7 @@ def load_env_file():
     env_file = local_env if os.path.exists(local_env) else dokku_env
     
     if os.path.exists(env_file):
-        print(f"Loading database config from {os.path.basename(env_file)}")
+        logger.info(f"Loading database config from {os.path.basename(env_file)}")
         with open(env_file, 'r') as f:
             for line in f:
                 line = line.strip()
@@ -71,13 +74,13 @@ def init_db():
     """Create all tables. Idempotent - safe to call multiple times."""
     try:
         Base.metadata.create_all(bind=engine, checkfirst=True)
-        print("✓ Database tables created/verified")
+        logger.info("Database tables created/verified")
     except Exception as e:
         # Se le tabelle esistono già, ignora l'errore
         if "already exists" in str(e).lower() or "duplicate" in str(e).lower():
-            print("✓ Database tables already exist")
+            logger.info("Database tables already exist")
         else:
-            print(f"⚠️ Database initialization warning: {e}")
+            logger.warning(f"Database initialization warning: {e}")
             # Non bloccare l'avvio per errori non critici
 
 

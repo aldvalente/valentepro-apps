@@ -65,7 +65,7 @@ class EquipmentImageSchema(BaseModel):
 class EquipmentBase(BaseModel):
     title: str
     description: Optional[str] = None
-    price_per_day: float
+    price_per_day: float = Field(..., gt=0, description="Price per day must be positive")
     city: Optional[str] = None
     category: Optional[str] = None
     sport: Optional[str] = None

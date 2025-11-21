@@ -42,7 +42,7 @@ def send_email(
     """
     # Skip if SMTP not configured
     if not SMTP_USER or not SMTP_PASS:
-        print(f"⚠️ Email not sent (SMTP not configured): {subject} to {to_email}")
+        logger.warning(f"Email not sent (SMTP not configured): {subject} to {to_email}")
         return False
     
     try:
@@ -65,11 +65,11 @@ def send_email(
             server.login(SMTP_USER, SMTP_PASS)
             server.send_message(msg)
         
-        print(f"✓ Email sent: {subject} to {to_email}")
+        logger.info(f"Email sent: {subject} to {to_email}")
         return True
     
     except Exception as e:
-        print(f"❌ Error sending email: {e}")
+        logger.error(f"Error sending email: {e}")
         return False
 
 
