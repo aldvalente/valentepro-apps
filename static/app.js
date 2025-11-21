@@ -60,14 +60,22 @@ function initLanguageSwitcher() {
   });
 }
 
-async function updateUserLanguage(lang) {
-  try {
-    // Note: This would require a new API endpoint to update user preferences
-    // For now, the language is just stored in localStorage
-    console.log(`Language preference updated to: ${lang}`);
-  } catch (err) {
-    console.error('Error updating language:', err);
-  }
+function updateUserLanguage(lang) {
+  // Note: Language preference is stored in localStorage
+  // When backend API for updating user profile is available, uncomment:
+  // try {
+  //   await fetch('/api/auth/update-profile', {
+  //     method: 'PATCH',
+  //     headers: {
+  //       'Content-Type': 'application/json',
+  //       'Authorization': `Bearer ${authToken}`
+  //     },
+  //     body: JSON.stringify({ preferred_language: lang })
+  //   });
+  // } catch (err) {
+  //   console.error('Error updating language:', err);
+  // }
+  console.log(`Language preference updated to: ${lang}`);
 }
 
 // ========== AUTH ==========

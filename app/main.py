@@ -1,5 +1,7 @@
 """Main FastAPI application - Sportbnb Equipment Rental"""
 import os
+import logging
+import smtplib
 from fastapi import FastAPI, Depends, HTTPException, status, Query
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -9,6 +11,9 @@ from sqlalchemy import or_, func
 from typing import List, Optional
 from datetime import timedelta, date, datetime
 import uuid
+
+# Setup logging
+logger = logging.getLogger(__name__)
 
 # Load environment
 env_file = os.path.join(os.path.dirname(__file__), '..', 'db', '.env.dokku')
@@ -220,8 +225,10 @@ def register(user_data: UserRegister, db: Session = Depends(get_db_session)):
             verification_token,
             lang
         )
+    except smtplib.SMTPException as e:
+        logger.warning(f"SMTP error sending verification email: {e}")
     except Exception as e:
-        print(f"Error sending verification email: {e}")
+        logger.error(f"Unexpected error sending verification email: {e}")
     
     # Create token
     access_token = create_access_token(data={"sub": str(user.id)})
@@ -304,8 +311,10 @@ def forgot_password(request: PasswordResetRequest, db: Session = Depends(get_db_
             reset_token,
             lang
         )
+    except smtplib.SMTPException as e:
+        logger.warning(f"SMTP error sending password reset email: {e}")
     except Exception as e:
-        print(f"Error sending password reset email: {e}")
+        logger.error(f"Unexpected error sending password reset email: {e}")
     
     return {"message": t('auth.password_reset_sent', lang)}
 
@@ -578,8 +587,10 @@ def create_booking(
                 total_price,
                 host_lang
             )
+    except smtplib.SMTPException as e:
+        logger.warning(f"SMTP error sending booking confirmation emails: {e}")
     except Exception as e:
-        print(f"Error sending booking confirmation emails: {e}")
+        logger.error(f"Unexpected error sending booking confirmation emails: {e}")
     
     return booking
 
@@ -651,8 +662,10 @@ def update_booking_status(
                     str(booking.date_to),
                     host_lang
                 )
+        except smtplib.SMTPException as e:
+            logger.warning(f"SMTP error sending cancellation emails: {e}")
         except Exception as e:
-            print(f"Error sending cancellation emails: {e}")
+            logger.error(f"Unexpected error sending cancellation emails: {e}")
     
     return {"message": t('booking.status_updated', lang)}
 
@@ -755,8 +768,10 @@ def create_message(
             data.text,
             receiver_lang
         )
+    except smtplib.SMTPException as e:
+        logger.warning(f"SMTP error sending message notification: {e}")
     except Exception as e:
-        print(f"Error sending message notification: {e}")
+        logger.error(f"Unexpected error sending message notification: {e}")
     
     return message
 

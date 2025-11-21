@@ -1,10 +1,14 @@
 """Email service for sending transactional emails"""
 import os
 import smtplib
+import logging
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from typing import List, Optional
 from app.i18n import t
+
+# Setup logging
+logger = logging.getLogger(__name__)
 
 # Email configuration from environment variables
 SMTP_HOST = os.environ.get('SMTP_HOST', 'smtp.gmail.com')
@@ -253,6 +257,11 @@ def send_new_message_notification(
     """Send new message notification"""
     subject = t('email.subject.new_message', lang)
     
+    # Truncate message if too long
+    preview_text = message_preview[:200]
+    if len(message_preview) > 200:
+        preview_text += '...'
+    
     html_body = f"""
     <html>
     <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
@@ -261,7 +270,7 @@ def send_new_message_notification(
             <p>{t('email.greeting', lang)} {name},</p>
             <p>You have received a new message from {sender_name}:</p>
             <div style="background-color: #f5f5f5; padding: 20px; border-radius: 5px; margin: 20px 0;">
-                <p style="font-style: italic;">"{message_preview[:200]}..."</p>
+                <p style="font-style: italic;">"{preview_text}"</p>
             </div>
             <p>Log in to read and reply to this message.</p>
             <p>{t('email.regards', lang)},<br>{t('email.team', lang)}</p>

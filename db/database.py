@@ -1,5 +1,6 @@
 """Database connection and session management"""
 import os
+import socket
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 from contextlib import contextmanager
@@ -25,7 +26,6 @@ def get_database_url():
     # If host is remote and not accessible, use SQLite for development
     if host not in ['localhost', '127.0.0.1']:
         try:
-            import socket
             socket.create_connection((host, int(port)), timeout=2)
         except (socket.error, socket.timeout):
             print(f"⚠️ Cannot connect to PostgreSQL at {host}:{port}, using SQLite")
