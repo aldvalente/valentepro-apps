@@ -24,13 +24,15 @@ class Attrezzatura(BaseModel):
     nome: str
     descrizione: str
     prezzo_giornaliero: float
-    immagine: Optional[str] = None
+    immagini: List[str] = []
+    badge: Optional[str] = None
 
 class AttrezzaturaCreate(BaseModel):
     nome: str
     descrizione: str
     prezzo_giornaliero: float
-    immagine: Optional[str] = None
+    immagini: List[str] = []
+    badge: Optional[str] = None
 
 class Prenotazione(BaseModel):
     id: int
@@ -48,10 +50,49 @@ class PrenotazioneCreate(BaseModel):
 
 # Demo attrezzature con coordinate (lat, lon)
 _attrezzature: List[Attrezzatura] = [
-    Attrezzatura(id=1, nome="Bici MTB Pro", descrizione="Mountain bike full carbon, 29 pollici.", prezzo_giornaliero=25.0, immagine="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=400&q=80"),
-    Attrezzatura(id=2, nome="SUP Gonfiabile", descrizione="Stand Up Paddle per lago/mare, include pagaia.", prezzo_giornaliero=18.0, immagine="https://images.unsplash.com/photo-1519864600265-abb23847ef2c?auto=format&fit=crop&w=400&q=80"),
-    Attrezzatura(id=3, nome="Ciaspole", descrizione="Ciaspole leggere per escursioni invernali.", prezzo_giornaliero=10.0, immagine="https://images.unsplash.com/photo-1464983953574-0892a716854b?auto=format&fit=crop&w=400&q=80"),
-    Attrezzatura(id=4, nome="Kayak Singolo", descrizione="Kayak da fiume, leggero e stabile.", prezzo_giornaliero=22.0, immagine="https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=400&q=80"),
+    Attrezzatura(
+        id=1,
+        nome="Bici MTB Pro",
+        descrizione="Mountain bike full carbon, 29 pollici. Perfetta per trail e percorsi impegnativi.",
+        prezzo_giornaliero=25.0,
+        immagini=[
+            "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=400&q=80",
+            "https://images.unsplash.com/photo-1518655048521-f130df041f66?auto=format&fit=crop&w=400&q=80"
+        ],
+        badge="Superhost"
+    ),
+    Attrezzatura(
+        id=2,
+        nome="SUP Gonfiabile",
+        descrizione="Stand Up Paddle per lago/mare, include pagaia e zaino. Facile da trasportare.",
+        prezzo_giornaliero=18.0,
+        immagini=[
+            "https://images.unsplash.com/photo-1519864600265-abb23847ef2c?auto=format&fit=crop&w=400&q=80",
+            "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=400&q=80"
+        ],
+        badge="Amato dagli ospiti"
+    ),
+    Attrezzatura(
+        id=3,
+        nome="Ciaspole",
+        descrizione="Ciaspole leggere per escursioni invernali. Adatte a tutti i livelli.",
+        prezzo_giornaliero=10.0,
+        immagini=[
+            "https://images.unsplash.com/photo-1464983953574-0892a716854b?auto=format&fit=crop&w=400&q=80"
+        ],
+        badge=None
+    ),
+    Attrezzatura(
+        id=4,
+        nome="Kayak Singolo",
+        descrizione="Kayak da fiume, leggero e stabile. Include pagaia e giubbotto.",
+        prezzo_giornaliero=22.0,
+        immagini=[
+            "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=400&q=80",
+            "https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=crop&w=400&q=80"
+        ],
+        badge="Superhost"
+    ),
 ]
 _attrezzature_coords = {
     1: (45.4642, 9.19),    # Milano

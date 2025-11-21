@@ -1,27 +1,197 @@
-/* Airbnb-style layout */
-.airbnb-layout {
+h1 {
 body {
   font-family: 'Segoe UI', Arial, sans-serif;
   background: #f4f6fb;
   margin: 0;
-.airbnb-layout .left {
   color: #222;
 }
-.container {
-.airbnb-layout .right {
-  max-width: 480px;
-  margin: 3em auto;
+/* Header stile Airbnb */
+.bnb-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   background: #fff;
-  border-radius: 16px;
-.cards {
-  box-shadow: 0 4px 24px #0001;
-  padding: 2em 2em 1em 2em;
+  padding: 1em 2em;
+  box-shadow: 0 2px 12px #0001;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
-h1 {
-  text-align: center;
+.bnb-header .logo {
+  font-size: 1.7em;
+  font-weight: bold;
+  color: #ff385c;
+  display: flex;
+  align-items: center;
+  gap: 0.3em;
+}
+.bnb-header .logo span { color: #222; font-weight: 700; }
+.bnb-header .search-bar {
+  display: flex;
+  align-items: center;
+  background: #f7f7f7;
+  border-radius: 30px;
+  padding: 0.3em 1em;
+  box-shadow: 0 1px 4px #0001;
+}
+.bnb-header .search-bar input {
+  border: none;
+  background: transparent;
+  font-size: 1em;
+  outline: none;
+  width: 180px;
+}
+.bnb-header .search-bar button {
+  background: #ff385c;
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 0.5em;
+  cursor: pointer;
+}
+.bnb-header .header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1em;
+}
+.bnb-header .filter-btn {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 20px;
+  padding: 0.4em 1.2em;
+  font-size: 1em;
+  cursor: pointer;
+  color: #222;
+}
+.bnb-header .profile-circle {
+  width: 38px;
+  height: 38px;
+  background: #eee;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  color: #555;
+  font-size: 1.1em;
+}
+/* Layout principale */
+.airbnb-layout {
+  display: flex;
+  gap: 2em;
+  margin-top: 2em;
+}
+.airbnb-layout .left {
+  flex: 1 1 350px;
+  min-width: 320px;
+}
+.airbnb-layout .right {
+  flex: 1 1 350px;
+  min-width: 320px;
+  max-width: 600px;
+}
+/* Card stile Airbnb */
+.cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1em;
+  margin-bottom: 2em;
+}
 .card {
-  color: #2a4d9b;
-  margin-bottom: 1.5em;
+  background: #f8fafc;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px #0001;
+  padding: 1em;
+  width: 220px;
+  min-height: 220px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.badge {
+  position: absolute;
+  left: 1em;
+  top: 1em;
+  background: #fff;
+  color: #ff385c;
+  font-weight: bold;
+  border-radius: 16px;
+  padding: 0.2em 0.8em;
+  font-size: 0.95em;
+  box-shadow: 0 1px 4px #0001;
+  z-index: 2;
+}
+.carousel {
+  position: relative;
+  width: 100%;
+  height: 140px;
+  margin-bottom: 0.7em;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #eee;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.carousel img {
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+  border-radius: 10px;
+}
+.carousel-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #fff8;
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  font-size: 1.2em;
+  cursor: pointer;
+  z-index: 3;
+}
+.carousel-btn.left { left: 8px; }
+.carousel-btn.right { right: 8px; }
+.carousel-dots {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 6px;
+}
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #fff8;
+  border: 1.5px solid #ff385c;
+  cursor: pointer;
+}
+.dot.active {
+  background: #ff385c;
+}
+.prezzo {
+  font-size: 1.2em;
+  color: #222;
+  font-weight: bold;
+  margin-top: 0.5em;
+}
+.prezzo .per {
+  color: #888;
+  font-size: 0.9em;
+  font-weight: normal;
+  margin-left: 0.2em;
 }
 form {
   display: flex;
@@ -32,13 +202,11 @@ form {
 input, textarea {
   border: 1px solid #d0d6e1;
   border-radius: 6px;
-.card img {
   padding: 0.7em;
   font-size: 1em;
   background: #f8fafc;
   transition: border 0.2s;
 }
-@media (max-width: 900px) {
 input:focus, textarea:focus {
   border: 1.5px solid #2a4d9b;
   outline: none;
@@ -79,6 +247,12 @@ li .del {
   background: none;
   border: none;
 }
+@media (max-width: 900px) {
+  .airbnb-layout { flex-direction: column; }
+  .airbnb-layout .right { max-width: 100vw; }
+}
 @media (max-width: 600px) {
-  .container { padding: 1em 0.5em; }
+  .airbnb-layout, .container { padding: 1em 0.5em; }
+  .cards { flex-direction: column; align-items: center; }
+  .card { width: 95vw; }
 }

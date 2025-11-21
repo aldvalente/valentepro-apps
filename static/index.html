@@ -7,16 +7,27 @@
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
+  <header class="bnb-header">
+    <div class="logo">🏄‍♂️ <span>Sportbnb</span></div>
+    <div class="search-bar">
+      <input type="text" placeholder="Cerca attrezzatura, città..." disabled style="opacity:.7;cursor:not-allowed;" />
+      <button disabled title="Demo"><svg width="20" height="20" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg></button>
+    </div>
+    <div class="header-actions">
+      <button class="filter-btn" disabled title="Demo">Filtri</button>
+      <div class="profile-circle">A</div>
+    </div>
+  </header>
   <div class="airbnb-layout">
     <div class="left">
-      <h1 style="margin-bottom:1em;">Noleggio Attrezzatura Sportiva</h1>
       <div id="catalogo" class="cards"></div>
       <form id="addAttForm">
-        <h3>Aggiungi Attrezzatura (demo)</h3>
+        <h3 style="margin-top:2em;">Aggiungi Attrezzatura (demo)</h3>
         <input type="text" id="nome" placeholder="Nome" required />
         <input type="text" id="descrizione" placeholder="Descrizione" required />
         <input type="number" id="prezzo" placeholder="Prezzo giornaliero (€)" step="0.01" required />
-        <input type="url" id="immagine" placeholder="URL immagine (opzionale)" />
+        <input type="url" id="immagine1" placeholder="URL immagine 1 (opzionale)" />
+        <input type="url" id="immagine2" placeholder="URL immagine 2 (opzionale)" />
         <button type="submit">Aggiungi</button>
       </form>
       <form id="prenForm">
@@ -37,6 +48,20 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
     let markers = [];
+    function creaCarosello(immagini, nome) {
+      if (!immagini || immagini.length === 0) return '';
+      let idx = 0;
+      const id = 'carousel_' + Math.random().toString(36).slice(2, 8);
+      let html = `<div class='carousel' id='${id}'>`;
+      html += `<img src='${immagini[0]}' alt='${nome}' />`;
+      if (immagini.length > 1) {
+        html += `<button class='carousel-btn left'>&lt;</button><button class='carousel-btn right'>&gt;</button>`;
+      }
+      html += `<div class='carousel-dots'>`;
+      for (let i = 0; i < immagini.length; i++) html += `<span class='dot${i===0?' active':''}'></span>`;
+      html += `</div></div>`;
+      return html;
+    }
     async function caricaCatalogo() {
       const res = await fetch('/api/attrezzature');
       const lista = await res.json();
@@ -46,12 +71,30 @@
         const card = document.createElement('div');
         card.className = 'card';
         card.innerHTML = `
-          ${a.immagine ? `<img src='${a.immagine}' alt='${a.nome}' />` : ''}
+          ${a.badge ? `<span class='badge'>${a.badge}</span>` : ''}
+          ${creaCarosello(a.immagini, a.nome)}
           <h3>${a.nome}</h3>
           <p>${a.descrizione}</p>
-          <b>€${a.prezzo_giornaliero.toFixed(2)}/giorno</b>
+          <div class='prezzo'>€${a.prezzo_giornaliero.toFixed(2)}<span class='per'>/notte</span></div>
         `;
         div.appendChild(card);
+      });
+      // Carosello immagini
+      document.querySelectorAll('.carousel').forEach(carousel => {
+        const imgs = Array.from(carousel.querySelectorAll('img'));
+        const dots = Array.from(carousel.querySelectorAll('.dot'));
+        const btnL = carousel.querySelector('.carousel-btn.left');
+        const btnR = carousel.querySelector('.carousel-btn.right');
+        let idx = 0;
+        const srcs = lista.find(a => a.nome === carousel.parentNode.querySelector('h3').textContent).immagini;
+        function show(i) {
+          idx = (i + srcs.length) % srcs.length;
+          carousel.querySelector('img').src = srcs[idx];
+          dots.forEach((d, j) => d.classList.toggle('active', j === idx));
+        }
+        if (btnL) btnL.onclick = () => show(idx-1);
+        if (btnR) btnR.onclick = () => show(idx+1);
+        dots.forEach((d, i) => d.onclick = () => show(i));
       });
       // aggiorna select prenotazione
       const sel = document.getElementById('attrezzatura_id');
@@ -62,11 +105,13 @@
       const nome = document.getElementById('nome').value;
       const descrizione = document.getElementById('descrizione').value;
       const prezzo = document.getElementById('prezzo').value;
-      const immagine = document.getElementById('immagine').value;
+      const immagini = [];
+      if(document.getElementById('immagine1').value) immagini.push(document.getElementById('immagine1').value);
+      if(document.getElementById('immagine2').value) immagini.push(document.getElementById('immagine2').value);
       await fetch('/api/attrezzature', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nome, descrizione, prezzo_giornaliero: prezzo, immagine })
+        body: JSON.stringify({ nome, descrizione, prezzo_giornaliero: prezzo, immagini })
       });
       e.target.reset();
       caricaCatalogo();
