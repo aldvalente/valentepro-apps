@@ -24,10 +24,19 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 def get_password_hash(password: str) -> str:
     """Genera l'hash di una password"""
-    # Bcrypt has a 72 byte limit, truncate if necessary
-    if len(password.encode('utf-8')) > 72:
-        password = password[:72]
-    return pwd_context.hash(password)
+    # Bcrypt has a 72 byte limit - ensure password doesn't exceed it
+    password_bytes = password.encode('utf-8')
+    if len(password_bytes) > 72:
+        # Take only first 72 bytes and decode back to string
+        password = password_bytes[:72].decode('utf-8', errors='ignore')
+    
+    try:
+        return pwd_context.hash(password)
+    except Exception as e:
+        # If still fails, use a simpler approach
+        if len(password) > 50:
+            password = password[:50]
+        return pwd_context.hash(password)
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     """Crea un token JWT"""
