@@ -1,3 +1,193 @@
+/* Global */
+body {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: #f4f6fb;
+  margin: 0;
+  color: #222;
+}
+
+/* Header stile Airbnb */
+.bnb-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #fff;
+  padding: 1em 2em;
+  box-shadow: 0 2px 12px #0001;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.bnb-header .logo {
+  font-size: 1.7em;
+  font-weight: bold;
+  color: #ff385c;
+  display: flex;
+  align-items: center;
+  gap: 0.3em;
+}
+.bnb-header .logo span { color: #222; font-weight: 700; }
+.bnb-header .search-bar {
+  display: flex;
+  align-items: center;
+  background: #f7f7f7;
+  border-radius: 30px;
+  padding: 0.3em 1em;
+  box-shadow: 0 1px 4px #0001;
+}
+.bnb-header .search-bar input {
+  border: none;
+  background: transparent;
+  font-size: 1em;
+  outline: none;
+  width: 240px;
+}
+.bnb-header .search-bar button {
+  background: #ff385c;
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 0.5em;
+  cursor: pointer;
+}
+.bnb-header .header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1em;
+}
+.bnb-header .filter-btn {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 20px;
+  padding: 0.4em 1.2em;
+  font-size: 1em;
+  cursor: pointer;
+  color: #222;
+}
+.bnb-header .profile-circle {
+  width: 38px;
+  height: 38px;
+  background: #eee;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  color: #555;
+  font-size: 1.1em;
+}
+
+/* Layout principale */
+.airbnb-layout {
+  display: flex;
+  gap: 2em;
+  margin-top: 2em;
+  padding: 0 2em 2em 2em;
+}
+.airbnb-layout .left {
+  flex: 1 1 600px;
+  min-width: 320px;
+}
+.airbnb-layout .right {
+  flex: 0 0 480px;
+  min-width: 320px;
+}
+
+/* Card stile Airbnb */
+.cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1em;
+  margin-bottom: 2em;
+}
+.card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px #0001;
+  padding: 0.8em;
+  width: 320px;
+  min-height: 260px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  text-align: left;
+  position: relative;
+  overflow: hidden;
+}
+.card h3 { margin: 0.5em 0 0.2em 0; font-size: 1.05em; }
+.card p { margin: 0; color: #555; font-size: 0.95em; }
+.card .meta { margin-top: 0.6em; display:flex; justify-content:space-between; align-items:center; }
+.badge {
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  background: rgba(255,255,255,0.95);
+  color: #ff385c;
+  font-weight: 700;
+  border-radius: 16px;
+  padding: 0.25em 0.8em;
+  font-size: 0.9em;
+  box-shadow: 0 1px 4px #0001;
+  z-index: 2;
+}
+
+.carousel {
+  position: relative;
+  width: 100%;
+  height: 180px;
+  margin-bottom: 0.6em;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #eee;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.carousel img {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+}
+.carousel-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255,255,255,0.85);
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  font-size: 1.2em;
+  cursor: pointer;
+  z-index: 3;
+}
+.carousel-btn.left { left: 8px; }
+.carousel-btn.right { right: 8px; }
+.carousel-dots { position:absolute; bottom:8px; left:50%; transform:translateX(-50%); display:flex; gap:6px; }
+.dot { width:8px; height:8px; border-radius:50%; background: rgba(255,255,255,0.85); border: 1.5px solid #ff385c; }
+.dot.active { background: #ff385c; }
+
+.prezzo { font-size: 1.15em; font-weight: 700; color: #222; }
+.prezzo .per { font-weight: 400; color: #777; font-size: 0.9em; margin-left:6px; }
+
+form { display:flex; flex-direction: column; gap:0.6em; margin-top:1em; }
+input, textarea, select { border: 1px solid #e0e6ef; border-radius: 8px; padding: 0.7em; font-size: 1em; }
+button { background: #ff385c; color: #fff; border: none; padding: 0.8em 1em; border-radius: 8px; cursor:pointer; }
+
+/* Map container adjustments */
+#mappa { width: 100%; height: 100%; border-radius: 12px; }
+
+@media (max-width: 1000px) {
+  .airbnb-layout { flex-direction: column; padding: 0 1em; }
+  .airbnb-layout .right { order: 2; width: 100%; }
+  .airbnb-layout .left { order: 1; }
+  .card { width: 100%; }
+}
 h1 {
 body {
   font-family: 'Segoe UI', Arial, sans-serif;
