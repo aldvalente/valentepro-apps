@@ -10,9 +10,65 @@ let markers = [];
 document.addEventListener('DOMContentLoaded', () => {
   initAuth();
   initEventListeners();
+  initLanguageSwitcher();
   loadEquipment();
   initMap();
 });
+
+// ========== LANGUAGE SWITCHER ==========
+
+function initLanguageSwitcher() {
+  const langBtn = document.getElementById('langBtn');
+  const langDropdown = document.getElementById('langDropdown');
+  const currentLangSpan = document.getElementById('currentLang');
+  
+  // Update current language display
+  const updateLanguageDisplay = () => {
+    const lang = window.i18n.getCurrentLanguage();
+    currentLangSpan.textContent = lang === 'it' ? '🇮🇹 IT' : '🇬🇧 EN';
+  };
+  
+  updateLanguageDisplay();
+  
+  // Toggle dropdown
+  langBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    langDropdown.style.display = langDropdown.style.display === 'none' ? 'block' : 'none';
+  });
+  
+  // Close dropdown when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!langBtn.contains(e.target) && !langDropdown.contains(e.target)) {
+      langDropdown.style.display = 'none';
+    }
+  });
+  
+  // Handle language selection
+  langDropdown.querySelectorAll('[data-lang]').forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      const lang = e.currentTarget.getAttribute('data-lang');
+      window.i18n.setLanguage(lang);
+      updateLanguageDisplay();
+      langDropdown.style.display = 'none';
+      
+      // Update current user's language preference if logged in
+      if (currentUser && authToken) {
+        updateUserLanguage(lang);
+      }
+    });
+  });
+}
+
+async function updateUserLanguage(lang) {
+  try {
+    // Note: This would require a new API endpoint to update user preferences
+    // For now, the language is just stored in localStorage
+    console.log(`Language preference updated to: ${lang}`);
+  } catch (err) {
+    console.error('Error updating language:', err);
+  }
+}
 
 // ========== AUTH ==========
 

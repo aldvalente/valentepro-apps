@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="/static/style.css?v=3">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="/static/i18n.js"></script>
 </head>
 <body>
   <!-- Header -->
@@ -16,7 +17,7 @@
       </div>
       
       <div class="search-bar">
-        <input id="searchInput" type="text" placeholder="Cerca attrezzatura, città..." />
+        <input id="searchInput" type="text" placeholder="Cerca attrezzatura, città..." data-i18n="header.search" />
         <button id="searchBtn" class="btn-primary-sm">
           <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
             <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
@@ -25,20 +26,31 @@
       </div>
       
       <div class="header-actions">
-        <button id="becomeHostBtn" class="btn-text" style="display:none;">Diventa Host</button>
+        <!-- Language Switcher -->
+        <div class="language-switcher" style="margin-right: 15px;">
+          <button id="langBtn" class="btn-text" style="padding: 8px 12px; font-size: 14px;">
+            <span id="currentLang">🇮🇹 IT</span>
+          </button>
+          <div class="lang-dropdown" id="langDropdown" style="display: none;">
+            <a href="#" data-lang="it">🇮🇹 Italiano</a>
+            <a href="#" data-lang="en">🇬🇧 English</a>
+          </div>
+        </div>
+        
+        <button id="becomeHostBtn" class="btn-text" style="display:none;" data-i18n="header.becomeHost">Diventa Host</button>
         <div id="authButtons">
-          <button id="loginBtn" class="btn-text">Accedi</button>
-          <button id="registerBtn" class="btn-primary">Registrati</button>
+          <button id="loginBtn" class="btn-text" data-i18n="header.login">Accedi</button>
+          <button id="registerBtn" class="btn-primary" data-i18n="header.register">Registrati</button>
         </div>
         <div id="userMenu" style="display:none;">
           <div class="user-circle" id="userCircle"></div>
           <div class="user-dropdown" id="userDropdown">
-            <a href="#" id="profileLink">Profilo</a>
-            <a href="#" id="myEquipmentLink">Le mie attrezzature</a>
-            <a href="#" id="myBookingsLink">Le mie prenotazioni</a>
-            <a href="#" id="adminLink" style="display:none;">Admin Panel</a>
+            <a href="#" id="profileLink" data-i18n="header.profile">Profilo</a>
+            <a href="#" id="myEquipmentLink" data-i18n="header.myEquipment">Le mie attrezzature</a>
+            <a href="#" id="myBookingsLink" data-i18n="header.myBookings">Le mie prenotazioni</a>
+            <a href="#" id="adminLink" style="display:none;" data-i18n="header.admin">Admin Panel</a>
             <hr>
-            <a href="#" id="logoutLink">Logout</a>
+            <a href="#" id="logoutLink" data-i18n="header.logout">Logout</a>
           </div>
         </div>
       </div>
