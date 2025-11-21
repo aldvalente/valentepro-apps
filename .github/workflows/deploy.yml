@@ -20,9 +20,9 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.DOKKU_SSH_KEY }}" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan apps.valentepro.com >> ~/.ssh/known_hosts
+          ssh-keyscan 164.68.99.198 >> ~/.ssh/known_hosts
 
       - name: Push to Dokku
         run: |
-          git remote add dokku dokku@apps.valentepro.com:apps || git remote set-url dokku dokku@apps.valentepro.com:apps
+          git remote add dokku dokku@164.68.99.198:apps || git remote set-url dokku dokku@164.68.99.198:apps
           git push dokku main -f
