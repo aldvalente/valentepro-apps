@@ -1,19 +1,25 @@
+/* Airbnb-style layout */
+.airbnb-layout {
 body {
   font-family: 'Segoe UI', Arial, sans-serif;
   background: #f4f6fb;
   margin: 0;
+.airbnb-layout .left {
   color: #222;
 }
 .container {
+.airbnb-layout .right {
   max-width: 480px;
   margin: 3em auto;
   background: #fff;
   border-radius: 16px;
+.cards {
   box-shadow: 0 4px 24px #0001;
   padding: 2em 2em 1em 2em;
 }
 h1 {
   text-align: center;
+.card {
   color: #2a4d9b;
   margin-bottom: 1.5em;
 }
@@ -26,11 +32,13 @@ form {
 input, textarea {
   border: 1px solid #d0d6e1;
   border-radius: 6px;
+.card img {
   padding: 0.7em;
   font-size: 1em;
   background: #f8fafc;
   transition: border 0.2s;
 }
+@media (max-width: 900px) {
 input:focus, textarea:focus {
   border: 1.5px solid #2a4d9b;
   outline: none;

@@ -7,10 +7,9 @@
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-  <div class="container">
-    <h1>Noleggio Attrezzatura Sportiva</h1>
-    <section>
-      <h2>Catalogo</h2>
+  <div class="airbnb-layout">
+    <div class="left">
+      <h1 style="margin-bottom:1em;">Noleggio Attrezzatura Sportiva</h1>
       <div id="catalogo" class="cards"></div>
       <form id="addAttForm">
         <h3>Aggiungi Attrezzatura (demo)</h3>
@@ -20,10 +19,8 @@
         <input type="url" id="immagine" placeholder="URL immagine (opzionale)" />
         <button type="submit">Aggiungi</button>
       </form>
-    </section>
-    <section>
-      <h2>Prenota</h2>
       <form id="prenForm">
+        <h3>Prenota</h3>
         <select id="attrezzatura_id" required></select>
         <input type="text" id="nome_cliente" placeholder="Tuo nome" required />
         <input type="date" id="data_inizio" required />
@@ -31,9 +28,15 @@
         <button type="submit">Prenota</button>
       </form>
       <ul id="prenotazioni"></ul>
-    </section>
+    </div>
+    <div class="right">
+      <div id="mappa" style="height: 90vh; border-radius: 16px; margin: 1em 0;"></div>
+    </div>
   </div>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
+    let markers = [];
     async function caricaCatalogo() {
       const res = await fetch('/api/attrezzature');
       const lista = await res.json();
@@ -67,6 +70,7 @@
       });
       e.target.reset();
       caricaCatalogo();
+      caricaMappa();
     };
     async function caricaPrenotazioni() {
       const res = await fetch('/api/prenotazioni');
@@ -93,8 +97,33 @@
       e.target.reset();
       caricaPrenotazioni();
     };
+    // Mappa
+    let mappa;
+    async function caricaMappa() {
+      if (!mappa) {
+        mappa = L.map('mappa').setView([45.5, 10.5], 6);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '© OpenStreetMap',
+        }).addTo(mappa);
+      }
+      // Rimuovi marker vecchi
+      markers.forEach(m => m.remove());
+      markers = [];
+      const res = await fetch('/api/attrezzature_coords');
+      const coords = await res.json();
+      const resAtt = await fetch('/api/attrezzature');
+      const attrezzature = await resAtt.json();
+      for (const a of attrezzature) {
+        const c = coords[a.id];
+        if (c) {
+          const marker = L.marker(c).addTo(mappa).bindPopup(`<b>${a.nome}</b><br>€${a.prezzo_giornaliero.toFixed(2)}/giorno`);
+          markers.push(marker);
+        }
+      }
+    }
     caricaCatalogo();
     caricaPrenotazioni();
+    caricaMappa();
   </script>
 </body>
 </html>

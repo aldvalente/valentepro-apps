@@ -45,10 +45,26 @@ class PrenotazioneCreate(BaseModel):
     data_inizio: str
     data_fine: str
 
-_attrezzature: List[Attrezzatura] = []
+
+# Demo attrezzature con coordinate (lat, lon)
+_attrezzature: List[Attrezzatura] = [
+    Attrezzatura(id=1, nome="Bici MTB Pro", descrizione="Mountain bike full carbon, 29 pollici.", prezzo_giornaliero=25.0, immagine="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=400&q=80"),
+    Attrezzatura(id=2, nome="SUP Gonfiabile", descrizione="Stand Up Paddle per lago/mare, include pagaia.", prezzo_giornaliero=18.0, immagine="https://images.unsplash.com/photo-1519864600265-abb23847ef2c?auto=format&fit=crop&w=400&q=80"),
+    Attrezzatura(id=3, nome="Ciaspole", descrizione="Ciaspole leggere per escursioni invernali.", prezzo_giornaliero=10.0, immagine="https://images.unsplash.com/photo-1464983953574-0892a716854b?auto=format&fit=crop&w=400&q=80"),
+    Attrezzatura(id=4, nome="Kayak Singolo", descrizione="Kayak da fiume, leggero e stabile.", prezzo_giornaliero=22.0, immagine="https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=400&q=80"),
+]
+_attrezzature_coords = {
+    1: (45.4642, 9.19),    # Milano
+    2: (45.4384, 10.9916), # Verona
+    3: (46.4983, 11.3548), # Bolzano
+    4: (45.4064, 11.8768), # Padova
+}
 _prenotazioni: List[Prenotazione] = []
-_id_att = 1
+_id_att = 5
 _id_pren = 1
+@app.get("/api/attrezzature_coords")
+def attrezzature_coords():
+    return _attrezzature_coords
 
 @app.get("/api/attrezzature", response_model=List[Attrezzatura])
 def lista_attrezzature():
