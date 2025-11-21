@@ -1,13 +1,13 @@
 """Main FastAPI application - Sportbnb Equipment Rental"""
 import os
-from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi import FastAPI, Depends, HTTPException, status, Query
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from sqlalchemy import or_, func
 from typing import List, Optional
-from datetime import timedelta, date
+from datetime import timedelta, date, datetime
 import uuid
 
 # Load environment
@@ -20,15 +20,26 @@ if os.path.exists(env_file):
                 os.environ.setdefault(k, v)
 
 from db.database import get_db_session, init_db
-from db.models import User, Equipment, EquipmentImage, Booking
+from db.models import User, Equipment, EquipmentImage, Booking, Review, Message, Payment
 from app.auth import (
     get_password_hash, verify_password, create_access_token,
-    get_current_user, require_auth, require_admin
+    get_current_user, require_auth, require_admin,
+    generate_verification_token, generate_password_reset_token,
+    PASSWORD_RESET_EXPIRE_HOURS
 )
 from app.schemas import (
-    UserRegister, UserLogin, Token, UserProfile,
+    UserRegister, UserLogin, Token, UserProfile, PasswordResetRequest, PasswordReset,
     EquipmentCreate, EquipmentUpdate, EquipmentResponse, EquipmentListItem,
-    BookingCreate, BookingResponse, AdminStats
+    BookingCreate, BookingResponse, BookingStatusUpdate,
+    ReviewCreate, ReviewResponse,
+    MessageCreate, MessageResponse,
+    AdminStats
+)
+from app.i18n import t, get_user_language
+from app.email_service import (
+    send_verification_email, send_password_reset_email,
+    send_booking_confirmation_guest, send_booking_confirmation_host,
+    send_booking_cancelled_email, send_new_message_notification
 )
 
 app = FastAPI(title="Sportbnb - Equipment Rental Platform")
@@ -169,17 +180,30 @@ def root():
 @app.post("/api/auth/register", response_model=Token)
 def register(user_data: UserRegister, db: Session = Depends(get_db_session)):
     """Register a new user"""
+    lang = user_data.preferred_language or 'it'
+    
     # Check if user exists
     existing = db.query(User).filter(User.email == user_data.email).first()
     if existing:
-        raise HTTPException(status_code=400, detail="Email already registered")
+        raise HTTPException(
+            status_code=400, 
+            detail=t('auth.email_already_registered', lang)
+        )
+    
+    # Generate email verification token
+    verification_token = generate_verification_token()
     
     # Create user
     user = User(
         email=user_data.email,
         full_name=user_data.full_name,
+        first_name=user_data.first_name,
+        last_name=user_data.last_name,
         phone=user_data.phone,
         hashed_password=get_password_hash(user_data.password),
+        preferred_language=lang,
+        email_verified=False,
+        email_verification_token=verification_token,
         is_host=False,
         is_admin=False,
         is_active=True
@@ -187,6 +211,17 @@ def register(user_data: UserRegister, db: Session = Depends(get_db_session)):
     db.add(user)
     db.commit()
     db.refresh(user)
+    
+    # Send verification email
+    try:
+        send_verification_email(
+            user.email,
+            user.full_name,
+            verification_token,
+            lang
+        )
+    except Exception as e:
+        print(f"Error sending verification email: {e}")
     
     # Create token
     access_token = create_access_token(data={"sub": str(user.id)})
@@ -220,9 +255,87 @@ def get_me(current_user: User = Depends(require_auth)):
 @app.post("/api/auth/become-host")
 def become_host(current_user: User = Depends(require_auth), db: Session = Depends(get_db_session)):
     """User requests to become a host"""
+    lang = get_user_language(current_user)
     current_user.is_host = True
     db.commit()
-    return {"message": "You are now a host!"}
+    return {"message": t('auth.now_host', lang)}
+
+
+@app.get("/api/auth/verify-email")
+def verify_email(token: str, db: Session = Depends(get_db_session)):
+    """Verify user email with token"""
+    user = db.query(User).filter(User.email_verification_token == token).first()
+    
+    if not user:
+        raise HTTPException(
+            status_code=400,
+            detail=t('auth.token_invalid', 'it')
+        )
+    
+    user.email_verified = True
+    user.email_verification_token = None
+    db.commit()
+    
+    lang = get_user_language(user)
+    return {"message": t('auth.email_verified_success', lang)}
+
+
+@app.post("/api/auth/forgot-password")
+def forgot_password(request: PasswordResetRequest, db: Session = Depends(get_db_session)):
+    """Request password reset email"""
+    user = db.query(User).filter(User.email == request.email).first()
+    
+    # Always return success to prevent email enumeration
+    if not user:
+        return {"message": t('auth.password_reset_sent', 'it')}
+    
+    # Generate reset token
+    reset_token = generate_password_reset_token()
+    user.password_reset_token = reset_token
+    user.password_reset_expires = datetime.utcnow() + timedelta(hours=PASSWORD_RESET_EXPIRE_HOURS)
+    db.commit()
+    
+    # Send reset email
+    lang = get_user_language(user)
+    try:
+        send_password_reset_email(
+            user.email,
+            user.full_name,
+            reset_token,
+            lang
+        )
+    except Exception as e:
+        print(f"Error sending password reset email: {e}")
+    
+    return {"message": t('auth.password_reset_sent', lang)}
+
+
+@app.post("/api/auth/reset-password")
+def reset_password(request: PasswordReset, db: Session = Depends(get_db_session)):
+    """Reset password with token"""
+    user = db.query(User).filter(User.password_reset_token == request.token).first()
+    
+    if not user:
+        raise HTTPException(
+            status_code=400,
+            detail=t('auth.token_invalid', 'it')
+        )
+    
+    # Check if token expired
+    if user.password_reset_expires and user.password_reset_expires < datetime.utcnow():
+        raise HTTPException(
+            status_code=400,
+            detail=t('auth.password_reset_expired', get_user_language(user))
+        )
+    
+    # Update password
+    user.hashed_password = get_password_hash(request.new_password)
+    user.password_reset_token = None
+    user.password_reset_expires = None
+    db.commit()
+    
+    lang = get_user_language(user)
+    return {"message": t('auth.password_reset_success', lang)}
 
 
 # ========== EQUIPMENT ENDPOINTS ==========
@@ -267,6 +380,7 @@ def list_equipment(
             "price_per_day": eq.price_per_day,
             "city": eq.city,
             "category": eq.category,
+            "sport": eq.sport,
             "available": eq.available,
             "images": [img.url for img in sorted(eq.images, key=lambda x: x.position)],
             "lat": eq.lat,
@@ -376,6 +490,7 @@ def my_equipment(current_user: User = Depends(require_auth), db: Session = Depen
             "price_per_day": eq.price_per_day,
             "city": eq.city,
             "category": eq.category,
+            "sport": eq.sport,
             "available": eq.available,
             "images": [img.url for img in sorted(eq.images, key=lambda x: x.position)],
             "lat": eq.lat,
@@ -394,13 +509,15 @@ def create_booking(
     db: Session = Depends(get_db_session)
 ):
     """Create a new booking"""
+    lang = get_user_language(current_user)
+    
     # Check equipment exists
     equipment = db.query(Equipment).filter(Equipment.id == data.equipment_id).first()
     if not equipment:
-        raise HTTPException(status_code=404, detail="Equipment not found")
+        raise HTTPException(status_code=404, detail=t('equipment.not_found', lang))
     
     if not equipment.available:
-        raise HTTPException(status_code=400, detail="Equipment not available")
+        raise HTTPException(status_code=400, detail=t('equipment.not_available', lang))
     
     # Check for overlapping bookings
     overlaps = db.query(Booking).filter(
@@ -414,7 +531,7 @@ def create_booking(
     ).first()
     
     if overlaps:
-        raise HTTPException(status_code=400, detail="Equipment already booked for these dates")
+        raise HTTPException(status_code=400, detail=t('booking.already_booked', lang))
     
     # Calculate total price
     days = (data.date_to - data.date_from).days + 1
@@ -424,6 +541,7 @@ def create_booking(
     booking = Booking(
         equipment_id=data.equipment_id,
         user_id=current_user.id,
+        host_id=equipment.host_id,
         date_from=data.date_from,
         date_to=data.date_to,
         total_price=total_price,
@@ -433,6 +551,36 @@ def create_booking(
     db.add(booking)
     db.commit()
     db.refresh(booking)
+    
+    # Send confirmation emails
+    try:
+        # Email to guest
+        send_booking_confirmation_guest(
+            current_user.email,
+            current_user.full_name,
+            equipment.title,
+            str(data.date_from),
+            str(data.date_to),
+            total_price,
+            lang
+        )
+        
+        # Email to host
+        if equipment.host:
+            host_lang = get_user_language(equipment.host)
+            send_booking_confirmation_host(
+                equipment.host.email,
+                equipment.host.full_name,
+                equipment.title,
+                current_user.full_name,
+                str(data.date_from),
+                str(data.date_to),
+                total_price,
+                host_lang
+            )
+    except Exception as e:
+        print(f"Error sending booking confirmation emails: {e}")
+    
     return booking
 
 
@@ -446,25 +594,212 @@ def my_bookings(current_user: User = Depends(require_auth), db: Session = Depend
 @app.patch("/api/bookings/{booking_id}/status")
 def update_booking_status(
     booking_id: uuid.UUID,
-    status: str,
+    status_update: BookingStatusUpdate,
     current_user: User = Depends(require_auth),
     db: Session = Depends(get_db_session)
 ):
-    """Update booking status (owner of equipment or admin only)"""
+    """Update booking status (owner of equipment, guest for cancel, or admin only)"""
+    lang = get_user_language(current_user)
+    
     booking = db.query(Booking).filter(Booking.id == booking_id).first()
     if not booking:
-        raise HTTPException(status_code=404, detail="Booking not found")
+        raise HTTPException(status_code=404, detail=t('booking.not_found', lang))
     
     equipment = db.query(Equipment).filter(Equipment.id == booking.equipment_id).first()
-    if equipment.host_id != current_user.id and not current_user.is_admin:
-        raise HTTPException(status_code=403, detail="Not authorized")
     
-    if status not in ["pending", "confirmed", "cancelled", "completed"]:
-        raise HTTPException(status_code=400, detail="Invalid status")
+    # Check permissions
+    is_host = equipment.host_id == current_user.id
+    is_guest = booking.user_id == current_user.id
+    is_admin = current_user.is_admin
     
-    booking.status = status
+    # Only host can confirm/reject, guest can cancel, admin can do all
+    if status_update.status in ["confirmed", "rejected"] and not (is_host or is_admin):
+        raise HTTPException(status_code=403, detail=t('auth.insufficient_permissions', lang))
+    
+    if status_update.status == "cancelled" and not (is_host or is_guest or is_admin):
+        raise HTTPException(status_code=403, detail=t('auth.insufficient_permissions', lang))
+    
+    if status_update.status not in ["pending", "confirmed", "rejected", "cancelled", "completed"]:
+        raise HTTPException(status_code=400, detail=t('booking.invalid_status', lang))
+    
+    booking.status = status_update.status
     db.commit()
-    return {"message": "Booking status updated"}
+    
+    # Send cancellation emails if cancelled
+    if status_update.status == "cancelled":
+        try:
+            # Email to guest
+            if booking.user:
+                guest_lang = get_user_language(booking.user)
+                send_booking_cancelled_email(
+                    booking.user.email,
+                    booking.user.full_name,
+                    equipment.title,
+                    str(booking.date_from),
+                    str(booking.date_to),
+                    guest_lang
+                )
+            
+            # Email to host
+            if equipment.host:
+                host_lang = get_user_language(equipment.host)
+                send_booking_cancelled_email(
+                    equipment.host.email,
+                    equipment.host.full_name,
+                    equipment.title,
+                    str(booking.date_from),
+                    str(booking.date_to),
+                    host_lang
+                )
+        except Exception as e:
+            print(f"Error sending cancellation emails: {e}")
+    
+    return {"message": t('booking.status_updated', lang)}
+
+
+# ========== REVIEW ENDPOINTS ==========
+
+@app.post("/api/reviews", response_model=ReviewResponse)
+def create_review(
+    data: ReviewCreate,
+    current_user: User = Depends(require_auth),
+    db: Session = Depends(get_db_session)
+):
+    """Create a review for a completed booking"""
+    lang = get_user_language(current_user)
+    
+    # Check booking exists and belongs to user
+    booking = db.query(Booking).filter(Booking.id == data.booking_id).first()
+    if not booking:
+        raise HTTPException(status_code=404, detail=t('booking.not_found', lang))
+    
+    if booking.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail=t('auth.insufficient_permissions', lang))
+    
+    # Check booking is completed
+    if booking.status != "completed":
+        raise HTTPException(status_code=400, detail=t('review.booking_not_completed', lang))
+    
+    # Check if already reviewed
+    existing = db.query(Review).filter(Review.booking_id == data.booking_id).first()
+    if existing:
+        raise HTTPException(status_code=400, detail=t('review.already_reviewed', lang))
+    
+    # Validate rating
+    if data.rating < 1 or data.rating > 5:
+        raise HTTPException(status_code=400, detail=t('review.invalid_rating', lang))
+    
+    # Create review
+    review = Review(
+        booking_id=data.booking_id,
+        equipment_id=booking.equipment_id,
+        author_id=current_user.id,
+        rating=data.rating,
+        comment=data.comment
+    )
+    db.add(review)
+    db.commit()
+    db.refresh(review)
+    
+    return review
+
+
+@app.get("/api/equipment/{equipment_id}/reviews", response_model=List[ReviewResponse])
+def get_equipment_reviews(
+    equipment_id: uuid.UUID,
+    db: Session = Depends(get_db_session)
+):
+    """Get all reviews for equipment"""
+    reviews = db.query(Review).filter(
+        Review.equipment_id == equipment_id
+    ).order_by(Review.created_at.desc()).all()
+    
+    return reviews
+
+
+# ========== MESSAGE ENDPOINTS ==========
+
+@app.post("/api/messages", response_model=MessageResponse)
+def create_message(
+    data: MessageCreate,
+    current_user: User = Depends(require_auth),
+    db: Session = Depends(get_db_session)
+):
+    """Send a message to another user"""
+    lang = get_user_language(current_user)
+    
+    # Check receiver exists
+    receiver = db.query(User).filter(User.id == data.receiver_id).first()
+    if not receiver:
+        raise HTTPException(status_code=404, detail=t('auth.user_not_found', lang))
+    
+    # Create message
+    message = Message(
+        sender_id=current_user.id,
+        receiver_id=data.receiver_id,
+        booking_id=data.booking_id,
+        text=data.text,
+        read=False
+    )
+    db.add(message)
+    db.commit()
+    db.refresh(message)
+    
+    # Send email notification
+    try:
+        receiver_lang = get_user_language(receiver)
+        send_new_message_notification(
+            receiver.email,
+            receiver.full_name,
+            current_user.full_name,
+            data.text,
+            receiver_lang
+        )
+    except Exception as e:
+        print(f"Error sending message notification: {e}")
+    
+    return message
+
+
+@app.get("/api/messages/thread", response_model=List[MessageResponse])
+def get_message_thread(
+    user_id: Optional[uuid.UUID] = Query(None),
+    booking_id: Optional[uuid.UUID] = Query(None),
+    current_user: User = Depends(require_auth),
+    db: Session = Depends(get_db_session)
+):
+    """Get message thread with a user or for a booking"""
+    query = db.query(Message)
+    
+    if booking_id:
+        # Messages for a specific booking
+        query = query.filter(Message.booking_id == booking_id)
+    elif user_id:
+        # Messages between current user and another user
+        query = query.filter(
+            or_(
+                (Message.sender_id == current_user.id) & (Message.receiver_id == user_id),
+                (Message.sender_id == user_id) & (Message.receiver_id == current_user.id)
+            )
+        )
+    else:
+        # All messages involving current user
+        query = query.filter(
+            or_(
+                Message.sender_id == current_user.id,
+                Message.receiver_id == current_user.id
+            )
+        )
+    
+    messages = query.order_by(Message.created_at.asc()).all()
+    
+    # Mark received messages as read
+    for msg in messages:
+        if msg.receiver_id == current_user.id and not msg.read:
+            msg.read = True
+    db.commit()
+    
+    return messages
 
 
 # ========== ADMIN ENDPOINTS ==========
@@ -473,13 +808,17 @@ def update_booking_status(
 def admin_stats(current_user: User = Depends(require_admin), db: Session = Depends(get_db_session)):
     """Get admin dashboard statistics"""
     total_users = db.query(func.count(User.id)).scalar()
+    total_hosts = db.query(func.count(User.id)).filter(User.is_host == True).scalar()
     total_equipment = db.query(func.count(Equipment.id)).scalar()
+    active_equipment = db.query(func.count(Equipment.id)).filter(Equipment.available == True).scalar()
     total_bookings = db.query(func.count(Booking.id)).scalar()
     pending_bookings = db.query(func.count(Booking.id)).filter(Booking.status == "pending").scalar()
     
     return {
         "total_users": total_users,
+        "total_hosts": total_hosts,
         "total_equipment": total_equipment,
+        "active_equipment": active_equipment,
         "total_bookings": total_bookings,
         "pending_bookings": pending_bookings
     }

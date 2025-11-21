@@ -22,6 +22,15 @@ def get_database_url():
     password = os.environ.get('PGPASSWORD', '')
     database = os.environ.get('PGDATABASE', 'postgres')
     
+    # If host is remote and not accessible, use SQLite for development
+    if host not in ['localhost', '127.0.0.1']:
+        try:
+            import socket
+            socket.create_connection((host, int(port)), timeout=2)
+        except (socket.error, socket.timeout):
+            print(f"⚠️ Cannot connect to PostgreSQL at {host}:{port}, using SQLite")
+            return 'sqlite:///./sportbnb.db'
+    
     return f"postgresql://{user}:{password}@{host}:{port}/{database}"
 
 
