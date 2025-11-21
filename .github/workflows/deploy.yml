@@ -12,6 +12,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # <-- IMPORTANTISSIMO per evitare shallow update
 
       - name: Setup SSH for Dokku
         run: |
@@ -23,4 +25,4 @@ jobs:
       - name: Push to Dokku
         run: |
           git remote add dokku dokku@164.68.99.198:apps || git remote set-url dokku dokku@164.68.99.198:apps
-          git push dokku main -f
+          git push dokku main --force
