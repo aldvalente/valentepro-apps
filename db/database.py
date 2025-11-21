@@ -60,8 +60,16 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 def init_db():
     """Create all tables. Idempotent - safe to call multiple times."""
-    Base.metadata.create_all(bind=engine)
-    print("✓ Database tables created/verified")
+    try:
+        Base.metadata.create_all(bind=engine, checkfirst=True)
+        print("✓ Database tables created/verified")
+    except Exception as e:
+        # Se le tabelle esistono già, ignora l'errore
+        if "already exists" in str(e).lower() or "duplicate" in str(e).lower():
+            print("✓ Database tables already exist")
+        else:
+            print(f"⚠️ Database initialization warning: {e}")
+            # Non bloccare l'avvio per errori non critici
 
 
 @contextmanager

@@ -52,17 +52,26 @@ async def startup_event():
         # Create admin user if not exists
         admin = db.query(User).filter(User.email == "admin@sportbnb.com").first()
         if not admin:
-            admin = User(
-                email="admin@sportbnb.com",
-                full_name="Admin User",
-                hashed_password=get_password_hash("admin123"),
-                is_admin=True,
-                is_host=True,
-                is_active=True
-            )
-            db.add(admin)
-            db.commit()
-            print("✓ Admin user created (admin@sportbnb.com / admin123)")
+            try:
+                admin = User(
+                    email="admin@sportbnb.com",
+                    full_name="Admin User",
+                    hashed_password=get_password_hash("admin123"),
+                    is_admin=True,
+                    is_host=True,
+                    is_active=True
+                )
+                db.add(admin)
+                db.commit()
+                print("✓ Admin user created (admin@sportbnb.com / admin123)")
+            except Exception as e:
+                db.rollback()
+                print(f"⚠️ Could not create admin user: {e}")
+                # Try to find existing admin
+                admin = db.query(User).filter(User.email == "admin@sportbnb.com").first()
+                if not admin:
+                    print("❌ No admin user found and could not create one")
+                    return
         
         # Create demo equipment if none exists
         if db.query(Equipment).count() == 0:
