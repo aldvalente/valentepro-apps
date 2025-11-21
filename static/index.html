@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <title>Gestionale Appuntamenti</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Gestionale Appuntamenti</h1>
+    <form id="addForm">
+      <input type="text" id="nome" placeholder="Nome" required />
+      <input type="datetime-local" id="data" required />
+      <textarea id="descrizione" placeholder="Descrizione"></textarea>
+      <button type="submit">Aggiungi</button>
+    </form>
+    <ul id="lista"></ul>
+  </div>
+  <script>
+    async function carica() {
+      const res = await fetch('/appuntamenti');
+      const lista = await res.json();
+      const ul = document.getElementById('lista');
+      ul.innerHTML = '';
+      lista.forEach(a => {
+        const li = document.createElement('li');
+        li.innerHTML = `<b>${a.nome}</b> <small>(${a.data.replace('T',' ').slice(0,16)})</small><br>${a.descrizione || ''} <button class='del' onclick='cancella(${a.id})' title='Cancella'>&#10060;</button>`;
+        ul.appendChild(li);
+      });
+    }
+    async function cancella(id) {
+      await fetch('/appuntamenti/' + id, { method: 'DELETE' });
+      carica();
+    }
+    document.getElementById('addForm').onsubmit = async e => {
+      e.preventDefault();
+      const nome = document.getElementById('nome').value;
+      const data = document.getElementById('data').value;
+      const descrizione = document.getElementById('descrizione').value;
+      await fetch('/appuntamenti', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nome, data, descrizione })
+      });
+      e.target.reset();
+      carica();
+    };
+    carica();
+  </script>
+</body>
+</html>

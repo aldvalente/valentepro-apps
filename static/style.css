@@ -1,0 +1,76 @@
+body {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: #f4f6fb;
+  margin: 0;
+  color: #222;
+}
+.container {
+  max-width: 480px;
+  margin: 3em auto;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 24px #0001;
+  padding: 2em 2em 1em 2em;
+}
+h1 {
+  text-align: center;
+  color: #2a4d9b;
+  margin-bottom: 1.5em;
+}
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7em;
+  margin-bottom: 2em;
+}
+input, textarea {
+  border: 1px solid #d0d6e1;
+  border-radius: 6px;
+  padding: 0.7em;
+  font-size: 1em;
+  background: #f8fafc;
+  transition: border 0.2s;
+}
+input:focus, textarea:focus {
+  border: 1.5px solid #2a4d9b;
+  outline: none;
+}
+button {
+  background: linear-gradient(90deg, #2a4d9b 60%, #4e8cff 100%);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.8em;
+  font-size: 1em;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+button:hover {
+  background: linear-gradient(90deg, #1d3570 60%, #3576d1 100%);
+}
+ul {
+  list-style: none;
+  padding: 0;
+}
+li {
+  background: #f8fafc;
+  border-radius: 8px;
+  margin-bottom: 1em;
+  padding: 1em 0.7em 0.7em 1em;
+  box-shadow: 0 2px 8px #0001;
+  position: relative;
+}
+li .del {
+  color: #c00;
+  cursor: pointer;
+  position: absolute;
+  right: 1em;
+  top: 1.2em;
+  font-size: 1.2em;
+  background: none;
+  border: none;
+}
+@media (max-width: 600px) {
+  .container { padding: 1em 0.5em; }
+}
