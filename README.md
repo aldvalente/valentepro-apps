@@ -1,20 +1,46 @@
-# ValentePro Apps — FastAPI
+# 🏄‍♂️ Sportbnb - Piattaforma Noleggio Attrezzature Sportive
 
-Questa è una semplice app Python FastAPI pronta per il deploy su Dokku tramite workflow GitHub Actions.
+Piattaforma moderna per il noleggio di attrezzature sportive con autenticazione, pannello admin e gestione prenotazioni.
 
-## File principali
-- `app/main.py` — entrypoint FastAPI
-- `requirements.txt` — dipendenze
-- `Procfile` — comando di avvio (Gunicorn/Uvicorn)
-- `runtime.txt` — versione Python
+## ✨ Caratteristiche Principali
 
-## Test locale
+- 🔐 Autenticazione JWT con ruoli (User/Host/Admin)
+- 🎨 Design moderno stile Airbnb con tema rosso
+- 🗺️ Mappa interattiva con Leaflet.js
+- 📱 Responsive e mobile-friendly
+- 🔍 Filtri di ricerca per categoria e città
+- 📅 Sistema prenotazioni con controllo sovrapposizioni
+- ⚙️ Pannello amministratore completo
+
+## 🚀 Quick Start
+
 ```bash
-python -m venv .venv
-source .venv/bin/activate
+# Sviluppo locale (usa SQLite)
 pip install -r requirements.txt
-uvicorn app.main:app --reload --port 5000
-# visita http://localhost:5000/
+uvicorn app.main:app --reload --port 3000
 ```
 
-Quando pushi su GitHub, il deploy sarà automatico su Dokku.
+**Credenziali Admin**: `admin@sportbnb.com` / `admin123`
+
+## 📦 Deploy su Dokku
+
+Vedi [DEPLOY.md](DEPLOY.md) per istruzioni complete.
+
+```bash
+./deploy.sh "Messaggio commit"
+```
+
+## 🛠️ Stack Tecnologico
+
+**Backend**: FastAPI, SQLAlchemy, PostgreSQL/SQLite, JWT  
+**Frontend**: Vanilla JS, Leaflet.js, CSS moderno  
+
+## 📁 Struttura
+
+```
+app/          → API FastAPI e autenticazione
+db/           → Modelli database e config
+static/       → Frontend (HTML/CSS/JS)
+```
+
+Vedi documentazione completa in [DEPLOY.md](DEPLOY.md)
