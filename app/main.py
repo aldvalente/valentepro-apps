@@ -10,9 +10,69 @@ import os
 
 app = FastAPI(title="Gestionale Appuntamenti")
 
+
 # Serve static frontend
 static_dir = os.path.join(os.path.dirname(__file__), '..', 'static')
 app.mount("/static", StaticFiles(directory=static_dir), name="static")
+
+# --- DEMO AIRBNB SPORT ---
+from pydantic import BaseModel
+from typing import List, Optional
+
+class Attrezzatura(BaseModel):
+    id: int
+    nome: str
+    descrizione: str
+    prezzo_giornaliero: float
+    immagine: Optional[str] = None
+
+class AttrezzaturaCreate(BaseModel):
+    nome: str
+    descrizione: str
+    prezzo_giornaliero: float
+    immagine: Optional[str] = None
+
+class Prenotazione(BaseModel):
+    id: int
+    attrezzatura_id: int
+    nome_cliente: str
+    data_inizio: str
+    data_fine: str
+
+class PrenotazioneCreate(BaseModel):
+    attrezzatura_id: int
+    nome_cliente: str
+    data_inizio: str
+    data_fine: str
+
+_attrezzature: List[Attrezzatura] = []
+_prenotazioni: List[Prenotazione] = []
+_id_att = 1
+_id_pren = 1
+
+@app.get("/api/attrezzature", response_model=List[Attrezzatura])
+def lista_attrezzature():
+    return _attrezzature
+
+@app.post("/api/attrezzature", response_model=Attrezzatura)
+def aggiungi_attrezzatura(a: AttrezzaturaCreate):
+    global _id_att
+    att = Attrezzatura(id=_id_att, **a.dict())
+    _attrezzature.append(att)
+    _id_att += 1
+    return att
+
+@app.get("/api/prenotazioni", response_model=List[Prenotazione])
+def lista_prenotazioni():
+    return _prenotazioni
+
+@app.post("/api/prenotazioni", response_model=Prenotazione)
+def crea_prenotazione(p: PrenotazioneCreate):
+    global _id_pren
+    pren = Prenotazione(id=_id_pren, **p.dict())
+    _prenotazioni.append(pren)
+    _id_pren += 1
+    return pren
 
 class Appuntamento(BaseModel):
     id: int

@@ -8,45 +8,93 @@
 </head>
 <body>
   <div class="container">
-    <h1>Gestionale Appuntamenti</h1>
-    <form id="addForm">
-      <input type="text" id="nome" placeholder="Nome" required />
-      <input type="datetime-local" id="data" required />
-      <textarea id="descrizione" placeholder="Descrizione"></textarea>
-      <button type="submit">Aggiungi</button>
-    </form>
-    <ul id="lista"></ul>
+    <h1>Noleggio Attrezzatura Sportiva</h1>
+    <section>
+      <h2>Catalogo</h2>
+      <div id="catalogo" class="cards"></div>
+      <form id="addAttForm">
+        <h3>Aggiungi Attrezzatura (demo)</h3>
+        <input type="text" id="nome" placeholder="Nome" required />
+        <input type="text" id="descrizione" placeholder="Descrizione" required />
+        <input type="number" id="prezzo" placeholder="Prezzo giornaliero (€)" step="0.01" required />
+        <input type="url" id="immagine" placeholder="URL immagine (opzionale)" />
+        <button type="submit">Aggiungi</button>
+      </form>
+    </section>
+    <section>
+      <h2>Prenota</h2>
+      <form id="prenForm">
+        <select id="attrezzatura_id" required></select>
+        <input type="text" id="nome_cliente" placeholder="Tuo nome" required />
+        <input type="date" id="data_inizio" required />
+        <input type="date" id="data_fine" required />
+        <button type="submit">Prenota</button>
+      </form>
+      <ul id="prenotazioni"></ul>
+    </section>
   </div>
   <script>
-    async function carica() {
-      const res = await fetch('/appuntamenti');
+    async function caricaCatalogo() {
+      const res = await fetch('/api/attrezzature');
       const lista = await res.json();
-      const ul = document.getElementById('lista');
-      ul.innerHTML = '';
+      const div = document.getElementById('catalogo');
+      div.innerHTML = '';
       lista.forEach(a => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+          ${a.immagine ? `<img src='${a.immagine}' alt='${a.nome}' />` : ''}
+          <h3>${a.nome}</h3>
+          <p>${a.descrizione}</p>
+          <b>€${a.prezzo_giornaliero.toFixed(2)}/giorno</b>
+        `;
+        div.appendChild(card);
+      });
+      // aggiorna select prenotazione
+      const sel = document.getElementById('attrezzatura_id');
+      sel.innerHTML = lista.map(a => `<option value="${a.id}">${a.nome}</option>`).join('');
+    }
+    document.getElementById('addAttForm').onsubmit = async e => {
+      e.preventDefault();
+      const nome = document.getElementById('nome').value;
+      const descrizione = document.getElementById('descrizione').value;
+      const prezzo = document.getElementById('prezzo').value;
+      const immagine = document.getElementById('immagine').value;
+      await fetch('/api/attrezzature', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nome, descrizione, prezzo_giornaliero: prezzo, immagine })
+      });
+      e.target.reset();
+      caricaCatalogo();
+    };
+    async function caricaPrenotazioni() {
+      const res = await fetch('/api/prenotazioni');
+      const lista = await res.json();
+      const ul = document.getElementById('prenotazioni');
+      ul.innerHTML = '<h3>Prenotazioni</h3>';
+      lista.forEach(p => {
         const li = document.createElement('li');
-        li.innerHTML = `<b>${a.nome}</b> <small>(${a.data.replace('T',' ').slice(0,16)})</small><br>${a.descrizione || ''} <button class='del' onclick='cancella(${a.id})' title='Cancella'>&#10060;</button>`;
+        li.innerHTML = `<b>${p.nome_cliente}</b> ha prenotato attrezzatura #${p.attrezzatura_id} dal ${p.data_inizio} al ${p.data_fine}`;
         ul.appendChild(li);
       });
     }
-    async function cancella(id) {
-      await fetch('/appuntamenti/' + id, { method: 'DELETE' });
-      carica();
-    }
-    document.getElementById('addForm').onsubmit = async e => {
+    document.getElementById('prenForm').onsubmit = async e => {
       e.preventDefault();
-      const nome = document.getElementById('nome').value;
-      const data = document.getElementById('data').value;
-      const descrizione = document.getElementById('descrizione').value;
-      await fetch('/appuntamenti', {
+      const attrezzatura_id = document.getElementById('attrezzatura_id').value;
+      const nome_cliente = document.getElementById('nome_cliente').value;
+      const data_inizio = document.getElementById('data_inizio').value;
+      const data_fine = document.getElementById('data_fine').value;
+      await fetch('/api/prenotazioni', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nome, data, descrizione })
+        body: JSON.stringify({ attrezzatura_id, nome_cliente, data_inizio, data_fine })
       });
       e.target.reset();
-      carica();
+      caricaPrenotazioni();
     };
-    carica();
+    caricaCatalogo();
+    caricaPrenotazioni();
   </script>
 </body>
 </html>
