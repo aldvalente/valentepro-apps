@@ -4,14 +4,14 @@
   <meta charset="UTF-8">
   <title>Gestionale Appuntamenti</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="/static/style.css?v=1">
+  <link rel="stylesheet" href="/static/style.css?v=2">
 </head>
 <body>
   <header class="bnb-header">
     <div class="logo">🏄‍♂️ <span>Sportbnb</span></div>
     <div class="search-bar">
-      <input type="text" placeholder="Cerca attrezzatura, città..." disabled style="opacity:.7;cursor:not-allowed;" />
-      <button disabled title="Demo"><svg width="20" height="20" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg></button>
+      <input id="searchInput" type="text" placeholder="Cerca attrezzatura, città..." />
+      <button id="searchBtn" title="Cerca"><svg width="20" height="20" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg></button>
     </div>
     <div class="header-actions">
       <button class="filter-btn" disabled title="Demo">Filtri</button>
@@ -48,6 +48,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
     let markers = [];
+    let listaAttrezzatureGlobal = [];
     function creaCarosello(immagini, nome) {
       if (!immagini || immagini.length === 0) return '';
       const id = 'carousel_' + Math.random().toString(36).slice(2, 8);
@@ -63,33 +64,35 @@
       html += `</div></div>`;
       return html;
     }
-    async function caricaCatalogo() {
-      const res = await fetch('/api/attrezzature');
-      const lista = await res.json();
+    async function caricaCatalogo(filteredList = null) {
       const div = document.getElementById('catalogo');
+      if (!listaAttrezzatureGlobal || listaAttrezzatureGlobal.length === 0) {
+        const res = await fetch('/api/attrezzature');
+        listaAttrezzatureGlobal = await res.json();
+      }
+      const lista = filteredList || listaAttrezzatureGlobal;
       div.innerHTML = '';
       lista.forEach(a => {
         const card = document.createElement('div');
         card.className = 'card';
+        card.dataset.id = a.id;
         card.innerHTML = `
           ${a.badge ? `<span class='badge'>${a.badge}</span>` : ''}
           ${creaCarosello(a.immagini, a.nome)}
           <h3>${a.nome}</h3>
           <p>${a.descrizione}</p>
-          <div class='prezzo'>€${a.prezzo_giornaliero.toFixed(2)}<span class='per'>/notte</span></div>
+          <div class='meta'><div class='prezzo'>€${a.prezzo_giornaliero.toFixed(2)}<span class='per'>/notte</span></div></div>
         `;
         div.appendChild(card);
       });
-      // Carosello immagini: each carousel keeps its own image list via data-images
+      // Inizializza caroselli
       document.querySelectorAll('.carousel').forEach(carousel => {
         const dots = Array.from(carousel.querySelectorAll('.dot'));
         const btnL = carousel.querySelector('.carousel-btn.left');
         const btnR = carousel.querySelector('.carousel-btn.right');
         let idx = 0;
         let srcs = [];
-        try {
-          srcs = JSON.parse(decodeURIComponent(carousel.dataset.images || '[]'));
-        } catch (e) { srcs = []; }
+        try { srcs = JSON.parse(decodeURIComponent(carousel.dataset.images || '[]')); } catch (e) { srcs = []; }
         if (!srcs || srcs.length === 0) return;
         function show(i) {
           idx = (i + srcs.length) % srcs.length;
@@ -119,9 +122,32 @@
         body: JSON.stringify({ nome, descrizione, prezzo_giornaliero: prezzo, immagini })
       });
       e.target.reset();
-      caricaCatalogo();
+      // refresh cached list and UI
+      listaAttrezzatureGlobal = [];
+      await caricaCatalogo();
       caricaMappa();
     };
+    function searchCatalogo(q) {
+      if (!q || q.trim() === '') {
+        caricaCatalogo();
+        caricaMappa();
+        return;
+      }
+      q = q.toLowerCase();
+      const filtered = (listaAttrezzatureGlobal || []).filter(a => {
+        return (a.nome && a.nome.toLowerCase().includes(q)) || (a.descrizione && a.descrizione.toLowerCase().includes(q));
+      });
+      caricaCatalogo(filtered);
+      caricaMappa(filtered);
+    }
+    // search handlers
+    const searchInput = document.getElementById('searchInput');
+    const searchBtn = document.getElementById('searchBtn');
+    searchBtn.addEventListener('click', () => searchCatalogo(searchInput.value));
+    searchInput.addEventListener('keyup', (ev) => {
+      if (ev.key === 'Enter') searchCatalogo(searchInput.value);
+      if (ev.key === 'Escape') { searchInput.value=''; searchCatalogo(''); }
+    });
     async function caricaPrenotazioni() {
       const res = await fetch('/api/prenotazioni');
       const lista = await res.json();
@@ -149,7 +175,7 @@
     };
     // Mappa
     let mappa;
-    async function caricaMappa() {
+    async function caricaMappa(filteredList = null) {
       if (!mappa) {
         mappa = L.map('mappa').setView([45.5, 10.5], 6);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -161,19 +187,20 @@
       markers = [];
       const res = await fetch('/api/attrezzature_coords');
       const coords = await res.json();
-      const resAtt = await fetch('/api/attrezzature');
-      const attrezzature = await resAtt.json();
+      const attrezzature = filteredList || listaAttrezzatureGlobal;
+      const bounds = [];
       for (const a of attrezzature) {
         const c = coords[a.id];
         if (c) {
           const marker = L.marker(c).addTo(mappa).bindPopup(`<b>${a.nome}</b><br>€${a.prezzo_giornaliero.toFixed(2)}/giorno`);
           markers.push(marker);
+          bounds.push(c);
         }
       }
+      if (bounds.length === 1) mappa.setView(bounds[0], 12);
+      else if (bounds.length > 1) mappa.fitBounds(bounds, { padding: [40, 40] });
     }
-    caricaCatalogo();
-    caricaPrenotazioni();
-    caricaMappa();
+    (async () => { await caricaCatalogo(); await caricaPrenotazioni(); await caricaMappa(); })();
   </script>
 </body>
 </html>

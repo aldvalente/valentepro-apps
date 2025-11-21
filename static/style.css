@@ -188,6 +188,12 @@ button { background: #ff385c; color: #fff; border: none; padding: 0.8em 1em; bor
   .airbnb-layout .left { order: 1; }
   .card { width: 100%; }
 }
+/* Overrides to improve header/search layout and avoid map overlap */
+.bnb-header { padding: 1.2em 2.5em; }
+.bnb-header .search-bar { flex: 1 1 480px; max-width: 640px; margin: 0 1em; }
+.bnb-header .search-bar input { width: 100%; max-width: none; }
+.bnb-header { z-index: 9999; }
+
 h1 {
 body {
   font-family: 'Segoe UI', Arial, sans-serif;
