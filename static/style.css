@@ -1,8 +1,8 @@
-/* Sportbnb - Modern Red Theme */
+/* Sportbnb - Colorless Grayscale Theme */
 :root {
-  --primary: #E31C5F;
-  --primary-dark: #C9184A;
-  --primary-light: #FF385C;
+  --primary: #666666;
+  --primary-dark: #444444;
+  --primary-light: #888888;
   --text: #222222;
   --text-light: #717171;
   --border: #DDDDDD;
@@ -685,7 +685,7 @@ body {
   position: absolute;
   top: 100%;
   right: 0;
-  background: white;
+  background: var(--bg);
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   min-width: 150px;
@@ -696,13 +696,13 @@ body {
 .lang-dropdown a {
   display: block;
   padding: 12px 16px;
-  color: #333;
+  color: var(--text);
   text-decoration: none;
   transition: background 0.2s;
 }
 
 .lang-dropdown a:hover {
-  background: #f5f5f5;
+  background: var(--bg-light);
 }
 
 .lang-dropdown a:first-child {
