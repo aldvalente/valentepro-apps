@@ -174,25 +174,38 @@ let currentLang = localStorage.getItem('language') || 'it';
 
 // Get translation
 function t(key) {
-  const keys = key.split('.');
-  let value = translations[currentLang];
+  // Try direct lookup first (for flat keys like 'header.login')
+  let value = translations[currentLang]?.[key];
   
-  for (const k of keys) {
-    if (value && typeof value === 'object') {
-      value = value[k];
-    } else {
-      break;
-    }
-  }
-  
-  // Fallback to English if not found
-  if (!value && currentLang !== 'en') {
-    value = translations.en;
+  // If not found, try nested lookup
+  if (!value) {
+    const keys = key.split('.');
+    value = translations[currentLang];
+    
     for (const k of keys) {
       if (value && typeof value === 'object') {
         value = value[k];
       } else {
         break;
+      }
+    }
+  }
+  
+  // Fallback to English if not found
+  if (!value && currentLang !== 'en') {
+    // Try direct lookup in English
+    value = translations.en?.[key];
+    
+    // If still not found, try nested lookup
+    if (!value) {
+      const keys = key.split('.');
+      value = translations.en;
+      for (const k of keys) {
+        if (value && typeof value === 'object') {
+          value = value[k];
+        } else {
+          break;
+        }
       }
     }
   }
