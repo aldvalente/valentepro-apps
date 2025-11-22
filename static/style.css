@@ -674,3 +674,41 @@ body {
     padding: 16px 20px;
   }
 }
+
+/* Language Switcher */
+.language-switcher {
+  position: relative;
+  display: inline-block;
+}
+
+.lang-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  min-width: 150px;
+  margin-top: 8px;
+  z-index: 1000;
+}
+
+.lang-dropdown a {
+  display: block;
+  padding: 12px 16px;
+  color: #333;
+  text-decoration: none;
+  transition: background 0.2s;
+}
+
+.lang-dropdown a:hover {
+  background: #f5f5f5;
+}
+
+.lang-dropdown a:first-child {
+  border-radius: 8px 8px 0 0;
+}
+
+.lang-dropdown a:last-child {
+  border-radius: 0 0 8px 8px;
+}

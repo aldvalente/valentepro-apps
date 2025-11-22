@@ -1,5 +1,7 @@
 from datetime import datetime, timedelta
 from typing import Optional
+import secrets
+import logging
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
@@ -12,9 +14,14 @@ from db.models import User
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # JWT settings
-SECRET_KEY = "your-secret-key-change-in-production-use-env-var"  # TODO: Use environment variable
+import os
+SECRET_KEY = os.environ.get("JWT_SECRET_KEY", "your-secret-key-change-in-production-use-env-var")
+if SECRET_KEY == "your-secret-key-change-in-production-use-env-var":
+    logger = logging.getLogger(__name__)
+    logger.warning("Using default JWT_SECRET_KEY - set JWT_SECRET_KEY environment variable in production!")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_DAYS = 7
+PASSWORD_RESET_EXPIRE_HOURS = 1
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
@@ -48,6 +55,16 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
+
+
+def generate_verification_token() -> str:
+    """Generate a secure random token for email verification"""
+    return secrets.token_urlsafe(32)
+
+
+def generate_password_reset_token() -> str:
+    """Generate a secure random token for password reset"""
+    return secrets.token_urlsafe(32)
 
 def decode_access_token(token: str) -> dict:
     """Decodifica un token JWT"""
