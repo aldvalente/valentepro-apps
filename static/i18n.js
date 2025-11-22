@@ -174,13 +174,10 @@ let currentLang = localStorage.getItem('language') || 'it';
 
 // Get translation
 function t(key) {
-  // Try direct lookup first (for flat keys like 'header.login')
-  let value = translations[currentLang]?.[key];
-  
-  // If not found, try nested lookup
-  if (!value) {
+  // Helper function to look up nested keys
+  const nestedLookup = (obj, key) => {
     const keys = key.split('.');
-    value = translations[currentLang];
+    let value = obj;
     
     for (const k of keys) {
       if (value && typeof value === 'object') {
@@ -189,6 +186,15 @@ function t(key) {
         break;
       }
     }
+    return value;
+  };
+  
+  // Try direct lookup first (for flat keys like 'header.login')
+  let value = translations[currentLang]?.[key];
+  
+  // If not found, try nested lookup
+  if (!value) {
+    value = nestedLookup(translations[currentLang], key);
   }
   
   // Fallback to English if not found
@@ -198,15 +204,7 @@ function t(key) {
     
     // If still not found, try nested lookup
     if (!value) {
-      const keys = key.split('.');
-      value = translations.en;
-      for (const k of keys) {
-        if (value && typeof value === 'object') {
-          value = value[k];
-        } else {
-          break;
-        }
-      }
+      value = nestedLookup(translations.en, key);
     }
   }
   
