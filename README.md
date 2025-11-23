@@ -187,6 +187,17 @@ dokku config:set apps FACEBOOK_CLIENT_ID="your-facebook-client-id"
 dokku config:set apps FACEBOOK_CLIENT_SECRET="your-facebook-client-secret"
 ```
 
+**Important: Run Database Migrations on First Deploy**
+
+After the first successful deploy, you need to run migrations on the Dokku server:
+
+```bash
+# SSH into the Dokku server or run via dokku command
+dokku run apps npm run db:migrate
+```
+
+This will create all the necessary database tables. You only need to run this once for the initial setup, or when you add new migrations.
+
 ### GitHub Actions Workflow
 
 The repository includes a GitHub Actions workflow at `.github/workflows/deploy.yml` that automatically deploys to Dokku when you push to the `main` branch.
