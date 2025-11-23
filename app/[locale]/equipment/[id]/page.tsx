@@ -65,10 +65,25 @@ export default function EquipmentDetailPage({ params }: { params: Promise<{ id: 
     if (!equipmentId) return;
     try {
       const res = await fetch(`/api/equipment/${equipmentId}`);
+      
+      if (!res.ok) {
+        console.error('Failed to fetch equipment: Server returned', res.status);
+        setEquipment(null);
+        return;
+      }
+      
       const data = await res.json();
-      setEquipment(data);
+      
+      // Validate the response structure (single equipment object)
+      if (data && typeof data === 'object' && !Array.isArray(data) && data.id) {
+        setEquipment(data);
+      } else {
+        console.error('Invalid response format:', data);
+        setEquipment(null);
+      }
     } catch (error) {
       console.error('Failed to fetch equipment:', error);
+      setEquipment(null);
     } finally {
       setLoading(false);
     }
@@ -218,7 +233,7 @@ export default function EquipmentDetailPage({ params }: { params: Promise<{ id: 
           {/* Reviews */}
           <div>
             <h2 className="text-xl font-bold mb-4">{t('reviews')}</h2>
-            {equipment.reviews.length > 0 ? (
+            {Array.isArray(equipment.reviews) && equipment.reviews.length > 0 ? (
               <div className="space-y-4">
                 {equipment.reviews.map((review) => (
                   <div key={review.id} className="bg-white p-4 rounded-lg border border-gray-200">
