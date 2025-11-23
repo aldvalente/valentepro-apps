@@ -1,0 +1,14 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-gray-50;
+  }
+}
+
+/* Leaflet map overrides */
+.leaflet-container {
+  font-family: inherit;
+}
