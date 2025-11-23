@@ -47,7 +47,7 @@ Ten sports equipment items are created across various categories:
    - Owner: Giulia Bianchi
 
 ### Water Sports
-5. **Tavola da Surf 7'6"** - `test-equip-5`
+5. **Tavola da Surf 7''6"** - `test-equip-5`
    - Sport: Surfing
    - Price: €30/day
    - Location: Forte dei Marmi, LU
