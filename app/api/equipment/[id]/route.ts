@@ -66,6 +66,7 @@ export async function GET(
       reviewCount: equipment.reviews.length,
     });
   } catch (error) {
+    console.error('Error fetching equipment by id:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -124,6 +125,7 @@ export async function PATCH(
         { status: 400 }
       );
     }
+    console.error('Error updating equipment:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -163,6 +165,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
+    console.error('Error deleting equipment:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

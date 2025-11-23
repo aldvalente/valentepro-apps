@@ -49,10 +49,25 @@ export default function HomePage() {
       if (filters.location) params.append('location', filters.location);
 
       const res = await fetch(`/api/equipment?${params.toString()}`);
+      
+      if (!res.ok) {
+        console.error('Failed to fetch equipment: Server returned', res.status);
+        setEquipment([]);
+        return;
+      }
+      
       const data = await res.json();
-      setEquipment(data);
+      
+      // Ensure data is an array before setting state
+      if (Array.isArray(data)) {
+        setEquipment(data);
+      } else {
+        console.error('Invalid response format:', data);
+        setEquipment([]);
+      }
     } catch (error) {
       console.error('Failed to fetch equipment:', error);
+      setEquipment([]);
     } finally {
       setLoading(false);
     }
@@ -80,13 +95,15 @@ export default function HomePage() {
     }, 0);
   };
 
-  const mapLocations = equipment.map((item) => ({
-    id: item.id,
-    latitude: item.latitude,
-    longitude: item.longitude,
-    title: item.title,
-    dailyPrice: item.dailyPrice,
-  }));
+  const mapLocations = Array.isArray(equipment) 
+    ? equipment.map((item) => ({
+        id: item.id,
+        latitude: item.latitude,
+        longitude: item.longitude,
+        title: item.title,
+        dailyPrice: item.dailyPrice,
+      }))
+    : [];
 
   return (
     <div className="min-h-screen">

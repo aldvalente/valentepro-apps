@@ -35,14 +35,29 @@ export default function MyEquipmentPage() {
   const fetchEquipment = async () => {
     try {
       const res = await fetch('/api/equipment');
+      
+      if (!res.ok) {
+        console.error('Failed to fetch equipment: Server returned', res.status);
+        setEquipment([]);
+        return;
+      }
+      
       const data = await res.json();
-      // Filter to show only user's equipment
-      const myEquipment = data.filter(
-        (item: any) => item.owner.id === (session?.user as any)?.id
-      );
-      setEquipment(myEquipment);
+      
+      // Ensure data is an array before filtering
+      if (Array.isArray(data)) {
+        // Filter to show only user's equipment
+        const myEquipment = data.filter(
+          (item: any) => item.owner.id === (session?.user as any)?.id
+        );
+        setEquipment(myEquipment);
+      } else {
+        console.error('Invalid response format:', data);
+        setEquipment([]);
+      }
     } catch (error) {
       console.error('Failed to fetch equipment:', error);
+      setEquipment([]);
     } finally {
       setLoading(false);
     }

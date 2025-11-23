@@ -46,13 +46,29 @@ export default function MyBookingsPage() {
         fetch('/api/bookings?asOwner=true'),
       ]);
 
-      const renterData = await renterRes.json();
-      const ownerData = await ownerRes.json();
+      let renterData = [];
+      let ownerData = [];
+
+      if (renterRes.ok) {
+        const data = await renterRes.json();
+        renterData = Array.isArray(data) ? data : [];
+      } else {
+        console.error('Failed to fetch renter bookings:', renterRes.status);
+      }
+
+      if (ownerRes.ok) {
+        const data = await ownerRes.json();
+        ownerData = Array.isArray(data) ? data : [];
+      } else {
+        console.error('Failed to fetch owner bookings:', ownerRes.status);
+      }
 
       setAsRenter(renterData);
       setAsOwner(ownerData);
     } catch (error) {
       console.error('Failed to fetch bookings:', error);
+      setAsRenter([]);
+      setAsOwner([]);
     } finally {
       setLoading(false);
     }
