@@ -39,7 +39,7 @@ interface Equipment {
   reviewCount: number;
 }
 
-export default function EquipmentDetailPage({ params }: { params: { id: string } }) {
+export default function EquipmentDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { data: session } = useSession();
   const router = useRouter();
   const t = useTranslations('equipment');
@@ -48,14 +48,23 @@ export default function EquipmentDetailPage({ params }: { params: { id: string }
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [bookingLoading, setBookingLoading] = useState(false);
+  const [equipmentId, setEquipmentId] = useState<string | null>(null);
+
+  // Unwrap params
+  useEffect(() => {
+    params.then(p => setEquipmentId(p.id));
+  }, [params]);
 
   useEffect(() => {
-    fetchEquipment();
-  }, [params.id]);
+    if (equipmentId) {
+      fetchEquipment();
+    }
+  }, [equipmentId]);
 
   const fetchEquipment = async () => {
+    if (!equipmentId) return;
     try {
-      const res = await fetch(`/api/equipment/${params.id}`);
+      const res = await fetch(`/api/equipment/${equipmentId}`);
       const data = await res.json();
       setEquipment(data);
     } catch (error) {
@@ -76,13 +85,15 @@ export default function EquipmentDetailPage({ params }: { params: { id: string }
       return;
     }
 
+    if (!equipmentId) return;
+
     setBookingLoading(true);
     try {
       const res = await fetch('/api/bookings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          equipmentId: params.id,
+          equipmentId: equipmentId,
           startDate,
           endDate,
         }),

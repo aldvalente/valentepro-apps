@@ -51,7 +51,7 @@ Create a `.env.local` file in the root directory:
 
 ```env
 # Database
-DATABASE_URL="postgres://postgres:c9a811a2f303e0d57cac5c717ca7874d@dokku-postgres-valenteapps-db:5432/valenteapps_db"
+DATABASE_URL="postgres://postgres:YOUR_PASSWORD@your-host:5432/your-database"
 
 # App
 APP_URL="http://localhost:3000"
