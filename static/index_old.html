@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <title>Gestionale Appuntamenti</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/static/style.css?v=2">
+</head>
+<body>
+  <header class="bnb-header">
+    <div class="logo">🏄‍♂️ <span>Sportbnb</span></div>
+    <div class="search-bar">
+      <input id="searchInput" type="text" placeholder="Cerca attrezzatura, città..." />
+      <button id="searchBtn" title="Cerca"><svg width="20" height="20" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg></button>
+    </div>
+    <div class="header-actions">
+      <button class="filter-btn" disabled title="Demo">Filtri</button>
+      <div class="profile-circle">A</div>
+    </div>
+  </header>
+  <div class="airbnb-layout">
+    <div class="left">
+      <div id="catalogo" class="cards"></div>
+      <form id="addAttForm">
+        <h3 style="margin-top:2em;">Aggiungi Attrezzatura (demo)</h3>
+        <input type="text" id="nome" placeholder="Nome" required />
+        <input type="text" id="descrizione" placeholder="Descrizione" required />
+        <input type="number" id="prezzo" placeholder="Prezzo giornaliero (€)" step="0.01" required />
+        <input type="url" id="immagine1" placeholder="URL immagine 1 (opzionale)" />
+        <input type="url" id="immagine2" placeholder="URL immagine 2 (opzionale)" />
+        <button type="submit">Aggiungi</button>
+      </form>
+      <form id="prenForm">
+        <h3>Prenota</h3>
+        <select id="attrezzatura_id" required></select>
+        <input type="text" id="nome_cliente" placeholder="Tuo nome" required />
+        <input type="date" id="data_inizio" required />
+        <input type="date" id="data_fine" required />
+        <button type="submit">Prenota</button>
+      </form>
+      <ul id="prenotazioni"></ul>
+    </div>
+    <div class="right">
+      <div id="mappa" style="height: 90vh; border-radius: 16px; margin: 1em 0;"></div>
+    </div>
+  </div>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    let markers = [];
+    let listaAttrezzatureGlobal = [];
+    function creaCarosello(immagini, nome) {
+      if (!immagini || immagini.length === 0) return '';
+      const id = 'carousel_' + Math.random().toString(36).slice(2, 8);
+      // encode immagini into data attribute to keep per-carousel state
+      const data = encodeURIComponent(JSON.stringify(immagini));
+      let html = `<div class='carousel' id='${id}' data-images='${data}'>`;
+      html += `<img src='${immagini[0]}' alt='${nome}' />`;
+      if (immagini.length > 1) {
+        html += `<button class='carousel-btn left'>&lt;</button><button class='carousel-btn right'>&gt;</button>`;
+      }
+      html += `<div class='carousel-dots'>`;
+      for (let i = 0; i < immagini.length; i++) html += `<span class='dot${i===0?' active':''}'></span>`;
+      html += `</div></div>`;
+      return html;
+    }
+    async function caricaCatalogo(filteredList = null) {
+      const div = document.getElementById('catalogo');
+      if (!listaAttrezzatureGlobal || listaAttrezzatureGlobal.length === 0) {
+        const res = await fetch('/api/attrezzature');
+        listaAttrezzatureGlobal = await res.json();
+      }
+      const lista = filteredList || listaAttrezzatureGlobal;
+      div.innerHTML = '';
+      lista.forEach(a => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.dataset.id = a.id;
+        card.innerHTML = `
+          ${a.badge ? `<span class='badge'>${a.badge}</span>` : ''}
+          ${creaCarosello(a.immagini, a.nome)}
+          <h3>${a.nome}</h3>
+          <p>${a.descrizione}</p>
+          <div class='meta'><div class='prezzo'>€${a.prezzo_giornaliero.toFixed(2)}<span class='per'>/notte</span></div></div>
+        `;
+        div.appendChild(card);
+      });
+      // Inizializza caroselli
+      document.querySelectorAll('.carousel').forEach(carousel => {
+        const dots = Array.from(carousel.querySelectorAll('.dot'));
+        const btnL = carousel.querySelector('.carousel-btn.left');
+        const btnR = carousel.querySelector('.carousel-btn.right');
+        let idx = 0;
+        let srcs = [];
+        try { srcs = JSON.parse(decodeURIComponent(carousel.dataset.images || '[]')); } catch (e) { srcs = []; }
+        if (!srcs || srcs.length === 0) return;
+        function show(i) {
+          idx = (i + srcs.length) % srcs.length;
+          const imgEl = carousel.querySelector('img');
+          if (imgEl) imgEl.src = srcs[idx];
+          dots.forEach((d, j) => d.classList.toggle('active', j === idx));
+        }
+        if (btnL) btnL.onclick = () => show(idx-1);
+        if (btnR) btnR.onclick = () => show(idx+1);
+        dots.forEach((d, i) => d.onclick = () => show(i));
+      });
+      // aggiorna select prenotazione
+      const sel = document.getElementById('attrezzatura_id');
+      sel.innerHTML = lista.map(a => `<option value="${a.id}">${a.nome}</option>`).join('');
+    }
+    document.getElementById('addAttForm').onsubmit = async e => {
+      e.preventDefault();
+      const nome = document.getElementById('nome').value;
+      const descrizione = document.getElementById('descrizione').value;
+      const prezzo = document.getElementById('prezzo').value;
+      const immagini = [];
+      if(document.getElementById('immagine1').value) immagini.push(document.getElementById('immagine1').value);
+      if(document.getElementById('immagine2').value) immagini.push(document.getElementById('immagine2').value);
+      await fetch('/api/attrezzature', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nome, descrizione, prezzo_giornaliero: prezzo, immagini })
+      });
+      e.target.reset();
+      // refresh cached list and UI
+      listaAttrezzatureGlobal = [];
+      await caricaCatalogo();
+      caricaMappa();
+    };
+    function searchCatalogo(q) {
+      if (!q || q.trim() === '') {
+        caricaCatalogo();
+        caricaMappa();
+        return;
+      }
+      q = q.toLowerCase();
+      const filtered = (listaAttrezzatureGlobal || []).filter(a => {
+        return (a.nome && a.nome.toLowerCase().includes(q)) || (a.descrizione && a.descrizione.toLowerCase().includes(q));
+      });
+      caricaCatalogo(filtered);
+      caricaMappa(filtered);
+    }
+    // search handlers
+    const searchInput = document.getElementById('searchInput');
+    const searchBtn = document.getElementById('searchBtn');
+    searchBtn.addEventListener('click', () => searchCatalogo(searchInput.value));
+    searchInput.addEventListener('keyup', (ev) => {
+      if (ev.key === 'Enter') searchCatalogo(searchInput.value);
+      if (ev.key === 'Escape') { searchInput.value=''; searchCatalogo(''); }
+    });
+    async function caricaPrenotazioni() {
+      const res = await fetch('/api/prenotazioni');
+      const lista = await res.json();
+      const ul = document.getElementById('prenotazioni');
+      ul.innerHTML = '<h3>Prenotazioni</h3>';
+      lista.forEach(p => {
+        const li = document.createElement('li');
+        li.innerHTML = `<b>${p.nome_cliente}</b> ha prenotato attrezzatura #${p.attrezzatura_id} dal ${p.data_inizio} al ${p.data_fine}`;
+        ul.appendChild(li);
+      });
+    }
+    document.getElementById('prenForm').onsubmit = async e => {
+      e.preventDefault();
+      const attrezzatura_id = document.getElementById('attrezzatura_id').value;
+      const nome_cliente = document.getElementById('nome_cliente').value;
+      const data_inizio = document.getElementById('data_inizio').value;
+      const data_fine = document.getElementById('data_fine').value;
+      await fetch('/api/prenotazioni', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ attrezzatura_id, nome_cliente, data_inizio, data_fine })
+      });
+      e.target.reset();
+      caricaPrenotazioni();
+    };
+    // Mappa
+    let mappa;
+    async function caricaMappa(filteredList = null) {
+      if (!mappa) {
+        mappa = L.map('mappa').setView([45.5, 10.5], 6);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '© OpenStreetMap',
+        }).addTo(mappa);
+      }
+      // Rimuovi marker vecchi
+      markers.forEach(m => m.remove());
+      markers = [];
+      const res = await fetch('/api/attrezzature_coords');
+      const coords = await res.json();
+      const attrezzature = filteredList || listaAttrezzatureGlobal;
+      const bounds = [];
+      for (const a of attrezzature) {
+        const c = coords[a.id];
+        if (c) {
+          const marker = L.marker(c).addTo(mappa).bindPopup(`<b>${a.nome}</b><br>€${a.prezzo_giornaliero.toFixed(2)}/giorno`);
+          markers.push(marker);
+          bounds.push(c);
+        }
+      }
+      if (bounds.length === 1) mappa.setView(bounds[0], 12);
+      else if (bounds.length > 1) mappa.fitBounds(bounds, { padding: [40, 40] });
+    }
+    (async () => { await caricaCatalogo(); await caricaPrenotazioni(); await caricaMappa(); })();
+  </script>
+</body>
+</html>
