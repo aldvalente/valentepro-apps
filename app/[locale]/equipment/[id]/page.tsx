@@ -75,7 +75,7 @@ export default function EquipmentDetailPage({ params }: { params: Promise<{ id: 
       const data = await res.json();
       
       // Validate the response structure (single equipment object)
-      if (data && data !== null && typeof data === 'object' && !Array.isArray(data) && data.id) {
+      if (data && typeof data === 'object' && !Array.isArray(data) && data.id) {
         setEquipment(data);
       } else {
         console.error('Invalid response format:', data);
