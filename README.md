@@ -77,17 +77,25 @@ openssl rand -base64 32
 
 ### 4. Set Up the Database
 
-Run Prisma migrations to create the database schema:
+Run Prisma migrations to create the database schema and seed test data:
 
 ```bash
 npx prisma migrate deploy
 ```
 
-Or for development (includes seeding if configured):
+Or for development:
 
 ```bash
 npx prisma migrate dev
 ```
+
+This will automatically create:
+- **3 test users**:
+  - `mario.rossi@example.com` (password: `password123`)
+  - `giulia.bianchi@example.com` (password: `password123`)
+  - `admin@gearbnb.com` (password: `admin123`, role: ADMIN)
+- **10 test equipment items** covering various sports (skiing, cycling, surfing, etc.)
+- **Sample reviews and bookings** to demonstrate the platform functionality
 
 ### 5. Generate Prisma Client
 
@@ -112,6 +120,29 @@ The application uses the following database models:
 - **Booking**: Rental bookings
 - **Review**: Equipment reviews and ratings
 - **Account/Session**: NextAuth.js authentication tables
+
+### Test Data
+
+The database includes pre-populated test data for development and testing:
+
+**Test Users:**
+| Email | Password | Role | Description |
+|-------|----------|------|-------------|
+| mario.rossi@example.com | password123 | USER | Test user with skiing and surfing equipment |
+| giulia.bianchi@example.com | password123 | USER | Test user with cycling and diving equipment |
+| admin@gearbnb.com | admin123 | ADMIN | Administrator account |
+
+**Test Equipment:**
+- 10 diverse sports equipment items across multiple categories:
+  - Skiing: Rossignol skis, Burton snowboard
+  - Cycling: Trek mountain bike, Bianchi road bike
+  - Water sports: Surfboard, sea kayak
+  - Tennis: Wilson racquet
+  - Hiking: Complete trekking kit
+  - Climbing: Full climbing gear set
+  - Diving: Complete scuba equipment
+
+All equipment includes Italian descriptions, realistic locations across Italy, and sample images.
 
 ### Database Commands
 
@@ -196,7 +227,9 @@ After the first successful deploy, you need to run migrations on the Dokku serve
 dokku run apps npm run db:migrate
 ```
 
-This will create all the necessary database tables. You only need to run this once for the initial setup, or when you add new migrations.
+This will create all the necessary database tables and populate the database with test data (3 test users, 10 equipment items, sample reviews and bookings). You only need to run this once for the initial setup, or when you add new migrations.
+
+**Note:** The test data is useful for development and demo purposes. For production, you may want to create a separate migration without test data or manually remove test entries after deployment.
 
 ### GitHub Actions Workflow
 
