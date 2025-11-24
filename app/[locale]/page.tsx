@@ -40,13 +40,13 @@ export default function HomePage() {
     fetchEquipment();
   }, []);
 
-  const fetchEquipment = async () => {
+  const fetchEquipment = async (currentFilters = filters) => {
     try {
       const params = new URLSearchParams();
-      if (filters.sportType !== 'all') params.append('sportType', filters.sportType);
-      if (filters.minPrice) params.append('minPrice', filters.minPrice);
-      if (filters.maxPrice) params.append('maxPrice', filters.maxPrice);
-      if (filters.location) params.append('location', filters.location);
+      if (currentFilters.sportType !== 'all') params.append('sportType', currentFilters.sportType);
+      if (currentFilters.minPrice) params.append('minPrice', currentFilters.minPrice);
+      if (currentFilters.maxPrice) params.append('maxPrice', currentFilters.maxPrice);
+      if (currentFilters.location) params.append('location', currentFilters.location);
 
       const res = await fetch(`/api/equipment?${params.toString()}`);
       
@@ -83,16 +83,15 @@ export default function HomePage() {
   };
 
   const clearFilters = () => {
-    setFilters({
+    const newFilters = {
       sportType: 'all',
       minPrice: '',
       maxPrice: '',
       location: '',
-    });
-    setTimeout(() => {
-      setLoading(true);
-      fetchEquipment();
-    }, 0);
+    };
+    setFilters(newFilters);
+    setLoading(true);
+    fetchEquipment(newFilters);
   };
 
   const mapLocations = Array.isArray(equipment) 

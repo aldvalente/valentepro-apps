@@ -32,11 +32,21 @@ export async function POST(req: NextRequest) {
         name,
         email,
         passwordHash,
+        emailVerified: null, // Not verified yet
       },
     });
 
+    // TODO: Send verification email here
+    // Example: await sendVerificationEmail(user.email, verificationToken);
+    console.log('TODO: Send verification email to:', user.email);
+
     return NextResponse.json(
-      { id: user.id, name: user.name, email: user.email },
+      { 
+        id: user.id, 
+        name: user.name, 
+        email: user.email,
+        message: 'Please check your email to verify your account'
+      },
       { status: 201 }
     );
   } catch (error) {

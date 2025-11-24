@@ -29,6 +29,7 @@
     "signupTitle": "Sign up for Gearbnb",
     "email": "Email",
     "password": "Password",
+    "confirmPassword": "Confirm Password",
     "name": "Name",
     "loginButton": "Log in",
     "signupButton": "Sign up",
@@ -38,6 +39,8 @@
     "dontHaveAccount": "Don't have an account?",
     "loginError": "Invalid email or password",
     "signupError": "Failed to create account",
+    "passwordMismatch": "Passwords do not match",
+    "verificationEmailSent": "Please check your email to verify your account before signing in.",
     "emailRequired": "Email is required",
     "passwordRequired": "Password is required",
     "nameRequired": "Name is required"
