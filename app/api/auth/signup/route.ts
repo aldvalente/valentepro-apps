@@ -2,11 +2,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
+import crypto from 'crypto';
+import { sendVerificationEmail } from '@/lib/email';
 
 const signupSchema = z.object({
   name: z.string().min(1),
   email: z.string().email(),
   password: z.string().min(6),
+  confirmPassword: z.string().min(6),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: 'Passwords do not match',
+  path: ['confirmPassword'],
 });
 
 export async function POST(req: NextRequest) {
@@ -36,16 +42,25 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // TODO: Send verification email here
-    // Example: await sendVerificationEmail(user.email, verificationToken);
-    console.log('TODO: Send verification email to:', user.email);
+    const token = crypto.randomUUID();
+    const expires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+    await prisma.verificationToken.create({
+      data: {
+        identifier: user.email,
+        token,
+        expires,
+      },
+    });
+
+    await sendVerificationEmail(user.email, token);
 
     return NextResponse.json(
       { 
         id: user.id, 
         name: user.name, 
         email: user.email,
-        message: 'Please check your email to verify your account'
+        message: 'Controlla la tua email per attivare l\'account'
       },
       { status: 201 }
     );
