@@ -1,7 +1,8 @@
 {
-  "name": "gearbnb",
-  "version": "1.0.0",
+  "name": "boatbnb",
+  "version": "2.0.0",
   "private": true,
+  "description": "Professional Boat Rental Platform with Skipper Services",
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",
