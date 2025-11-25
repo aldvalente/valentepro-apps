@@ -1,5 +1,5 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+// Boat Rental Application - Prisma Schema
+// Comprehensive schema for boat rental with skipper support
 
 generator client {
   provider = "prisma-client-js"
@@ -11,15 +11,52 @@ datasource db {
 }
 
 enum UserRole {
-  USER
-  ADMIN
+  USER          // Regular customer
+  OWNER         // Boat owner
+  SKIPPER       // Professional skipper
+  ADMIN         // System administrator
 }
 
 enum BookingStatus {
-  REQUESTED
-  CONFIRMED
-  CANCELLED
+  QUOTE         // Price quote generated
+  PENDING       // Awaiting confirmation
+  CONFIRMED     // Confirmed and paid
+  CANCELLED     // Cancelled by user or owner
+  COMPLETED     // Rental completed
+  REJECTED      // Rejected by owner
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
   COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum LicenseType {
+  NONE          // No license
+  BASIC         // Basic boating license
+  COASTAL       // Coastal navigation
+  OFFSHORE      // Offshore/Ocean navigation
+  PROFESSIONAL  // Professional captain license
+}
+
+enum BoatType {
+  SAILBOAT
+  MOTORBOAT
+  CATAMARAN
+  YACHT
+  RIB          // Rigid Inflatable Boat
+  SPEEDBOAT
+  FISHING
+}
+
+enum AvailabilityStatus {
+  AVAILABLE
+  BOOKED
+  MAINTENANCE
+  UNAVAILABLE
 }
 
 model User {
@@ -29,16 +66,36 @@ model User {
   emailVerified DateTime?
   image         String?
   passwordHash  String?
+  phone         String?
   role          UserRole  @default(USER)
+  
+  // License information for bareboat rentals
+  licenseType   LicenseType @default(NONE)
+  licenseNumber String?
+  licenseExpiry DateTime?
+  licenseCountry String?
+  
+  // Skipper-specific fields
+  skipperBio         String?    @db.Text
+  skipperExperience  Int?       // Years of experience
+  skipperRating      Float?     @default(0)
+  skipperCertifications String[]  // Array of certification names
+  hourlyRate         Float?     // Skipper hourly rate
+  
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  equipment Equipment[]
-  bookings  Booking[]
-  reviews   Review[]
-  accounts  Account[]
-  sessions  Session[]
+  // Relations
+  ownedBoats        Boat[]           @relation("BoatOwner")
+  bookingsAsRenter  Booking[]        @relation("BookingRenter")
+  skipperBookings   Booking[]        @relation("BookingSkipper")
+  reviews           Review[]         @relation("ReviewAuthor")
+  payments          Payment[]
+  accounts          Account[]
+  sessions          Session[]
 
+  @@index([role])
+  @@index([email])
   @@map("users")
 }
 
@@ -81,64 +138,217 @@ model VerificationToken {
   @@map("verification_tokens")
 }
 
-model Equipment {
+model Boat {
   id              String    @id @default(cuid())
-  title           String
+  name            String
   description     String    @db.Text
-  sportType       String
-  dailyPrice      Float
+  boatType        BoatType
+  
+  // Specifications
+  length          Float     // meters
+  capacity        Int       // number of people
+  cabins          Int
+  bathrooms       Int
+  enginePower     Int?      // HP
+  yearBuilt       Int
+  brand           String
+  model           String
+  
+  // Location
+  homePort        String
   locationAddress String
   latitude        Float
   longitude       Float
+  
+  // Pricing
+  dailyPrice      Float
+  weeklyPrice     Float?
+  requiredLicense LicenseType @default(BASIC)
+  
+  // Skipper options
+  skipperRequired      Boolean @default(false)
+  skipperAvailable     Boolean @default(true)
+  skipperDailyRate     Float?
+  
+  // Features and amenities
+  features        String[]  // e.g., ["GPS", "Radar", "WiFi", "Air Conditioning"]
   images          String[]
+  
+  // Status
   isActive        Boolean   @default(true)
   ownerId         String
+  
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
-  owner    User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  bookings Booking[]
-  reviews  Review[]
+  // Relations
+  owner           User              @relation("BoatOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  bookings        Booking[]
+  availabilities  BoatAvailability[]
+  extras          BoatExtra[]
 
-  @@index([sportType])
+  @@index([boatType])
   @@index([ownerId])
   @@index([isActive])
-  @@map("equipment")
+  @@index([homePort])
+  @@map("boats")
+}
+
+model BoatAvailability {
+  id          String              @id @default(cuid())
+  boatId      String
+  startDate   DateTime
+  endDate     DateTime
+  status      AvailabilityStatus  @default(AVAILABLE)
+  notes       String?             @db.Text
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  boat        Boat      @relation(fields: [boatId], references: [id], onDelete: Cascade)
+
+  @@index([boatId])
+  @@index([startDate, endDate])
+  @@map("boat_availabilities")
+}
+
+model BoatExtra {
+  id          String   @id @default(cuid())
+  boatId      String
+  name        String   // e.g., "Water Sports Equipment", "Fishing Gear"
+  description String?  @db.Text
+  price       Float    // Additional cost
+  priceType   String   // "per_day", "per_booking", "per_hour"
+  isActive    Boolean  @default(true)
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  boat        Boat              @relation(fields: [boatId], references: [id], onDelete: Cascade)
+  bookingExtras BookingExtra[]
+
+  @@index([boatId])
+  @@map("boat_extras")
 }
 
 model Booking {
-  id          String        @id @default(cuid())
-  userId      String
-  equipmentId String
-  startDate   DateTime
-  endDate     DateTime
-  totalPrice  Float
-  status      BookingStatus @default(REQUESTED)
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  id              String        @id @default(cuid())
+  boatId          String
+  renterId        String
+  skipperId       String?       // Optional skipper
+  
+  // Dates
+  startDate       DateTime
+  endDate         DateTime
+  
+  // Pricing breakdown
+  boatPrice       Float         // Base boat rental
+  skipperPrice    Float         @default(0)
+  extrasPrice     Float         @default(0)
+  totalPrice      Float
+  
+  // Status
+  status          BookingStatus @default(QUOTE)
+  
+  // Skipper selection
+  withSkipper     Boolean       @default(false)
+  skipperNotes    String?       @db.Text
+  
+  // Renter license info (for bareboat)
+  renterLicense   String?       // License number at time of booking
+  
+  // Notes
+  ownerNotes      String?       @db.Text
+  renterNotes     String?       @db.Text
+  
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
 
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  equipment Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+  // Relations
+  boat            Boat          @relation(fields: [boatId], references: [id], onDelete: Cascade)
+  renter          User          @relation("BookingRenter", fields: [renterId], references: [id], onDelete: Cascade)
+  skipper         User?         @relation("BookingSkipper", fields: [skipperId], references: [id], onDelete: SetNull)
+  extras          BookingExtra[]
+  payment         Payment?
+  reviews         Review[]      @relation("BookingReviews")
 
-  @@index([userId])
-  @@index([equipmentId])
+  @@index([boatId])
+  @@index([renterId])
+  @@index([skipperId])
   @@index([status])
+  @@index([startDate, endDate])
   @@map("bookings")
+}
+
+model BookingExtra {
+  id          String   @id @default(cuid())
+  bookingId   String
+  extraId     String
+  quantity    Int      @default(1)
+  priceAtBooking Float  // Lock in the price at booking time
+  
+  createdAt   DateTime  @default(now())
+
+  booking     Booking   @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  extra       BoatExtra @relation(fields: [extraId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId])
+  @@map("booking_extras")
+}
+
+model Payment {
+  id              String        @id @default(cuid())
+  bookingId       String        @unique
+  userId          String
+  amount          Float
+  currency        String        @default("EUR")
+  status          PaymentStatus @default(PENDING)
+  
+  // Payment method (mock for now)
+  paymentMethod   String?       // "credit_card", "paypal", "bank_transfer"
+  transactionId   String?       // External payment processor transaction ID
+  
+  // Timestamps
+  paidAt          DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  // Relations
+  booking         Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId])
+  @@index([userId])
+  @@index([status])
+  @@map("payments")
 }
 
 model Review {
   id          String   @id @default(cuid())
-  equipmentId String
-  userId      String
-  rating      Int
+  bookingId   String
+  authorId    String   // User who wrote the review
+  targetId    String   // User/Boat being reviewed (polymorphic)
+  targetType  String   // "boat", "skipper", "renter"
+  
+  rating      Int      // 1-5 stars
   comment     String?  @db.Text
+  
+  // Verification
+  isVerified  Boolean  @default(false) // Verified that booking was completed
+  
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  equipment Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // Relations
+  booking     Booking  @relation("BookingReviews", fields: [bookingId], references: [id], onDelete: Cascade)
+  author      User     @relation("ReviewAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  // Note: targetId is polymorphic and can reference User or Boat based on targetType
+  // We cannot create explicit foreign key relations for polymorphic references
 
-  @@index([equipmentId])
-  @@index([userId])
+  @@index([bookingId])
+  @@index([authorId])
+  @@index([targetId])
+  @@index([targetType])
+  @@unique([bookingId, authorId, targetId, targetType]) // Prevent duplicate reviews
   @@map("reviews")
 }

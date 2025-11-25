@@ -1,37 +1,66 @@
-# Gearbnb - Sports Equipment Rental Platform
+# ⛵ BoatBnB - Professional Boat Rental Platform
 
+A modern, production-ready boat rental marketplace built with Next.js 14, TypeScript, Prisma, and PostgreSQL. Features comprehensive booking management, skipper services, license validation, and multi-role authorization.
 
-Gearbnb is a modern, full-stack Airbnb-style marketplace for renting sports equipment. Built with Next.js 14, TypeScript, Prisma, and PostgreSQL, it features full multilingual support (English and Italian) and a responsive, user-friendly interface.
+## 🚀 Key Features
 
-## Features
+### For Renters
+- 🔍 **Advanced Boat Search**: Filter by type, price, capacity, location, and availability
+- 📅 **Flexible Booking**: Book boats with or without professional skippers
+- 💰 **Instant Quotes**: Get detailed price breakdowns including extras
+- 🎫 **License Validation**: Automatic validation for bareboat rentals
+- ⭐ **Reviews & Ratings**: Read and write reviews for boats, skippers, and experiences
+- 📱 **Responsive Design**: Full mobile support
 
-- 🏂 **Equipment Marketplace**: Browse and rent sports equipment (skis, bikes, surfboards, etc.)
-- 🗺️ **Interactive Map**: View equipment locations on an OpenStreetMap-powered map
-- 🔐 **Authentication**: Email/password login plus Google and Facebook OAuth
-- 🌍 **Multilingual**: Full support for English and Italian with automatic translation
-- 📱 **Responsive Design**: Airbnb-inspired UI that works on all devices
-- 💳 **Booking System**: Request bookings with date selection and price calculation
-- ⭐ **Reviews**: Rate and review equipment
-- 📊 **Dashboard**: Manage your equipment, bookings, and profile
-- 🔍 **Advanced Filters**: Filter by sport type, price range, and location
+### For Boat Owners
+- 🛥️ **Fleet Management**: Add and manage multiple boats
+- 💵 **Dynamic Pricing**: Set daily/weekly rates and extras
+- 📊 **Booking Dashboard**: Track all bookings and their status
+- 🔒 **Availability Control**: Manage boat availability and maintenance periods
+- 📝 **Owner Reviews**: Build reputation through renter feedback
 
-## Technology Stack
+### For Skippers
+- 👨‍✈️ **Professional Profile**: Showcase experience and certifications
+- 💼 **Job Management**: View and manage skipper assignments
+- ⭐ **Rating System**: Build professional reputation
+- 📅 **Availability Calendar**: Manage your schedule
 
-- **Frontend**: Next.js 14 (App Router), React, TypeScript, Tailwind CSS
-- **Backend**: Next.js API Routes
+### For Administrators
+- 🔐 **Full Access Control**: Manage users, boats, and bookings
+- 📊 **System Overview**: Monitor platform activity
+- ⚙️ **Configuration Management**: Control system settings
+
+## 🏗️ Architecture
+
+### Modular Structure
+
+```
+src/modules/
+├── boats/          # Boat management (fleet, pricing, availability)
+├── bookings/       # Reservation workflow and calendar
+├── skippers/       # Skipper profiles and assignments
+├── users/          # User management and authentication
+├── payments/       # Payment processing (mock + real integration ready)
+└── reviews/        # Review system with validation
+```
+
+### Technology Stack
+
+- **Frontend**: Next.js 14 (App Router), React 18, TypeScript, Tailwind CSS
+- **Backend**: Next.js API Routes with modular services
 - **Database**: PostgreSQL with Prisma ORM
-- **Authentication**: NextAuth.js with multiple providers
+- **Authentication**: NextAuth.js with role-based access control
+- **Validation**: Zod schemas for all inputs
 - **Maps**: Leaflet with OpenStreetMap
-- **Internationalization**: next-intl
-- **Deployment**: Dokku on dedicated server
+- **Internationalization**: next-intl (IT/EN)
 
-## Prerequisites
+## 📋 Prerequisites
 
 - Node.js 18 or higher
 - PostgreSQL database
 - npm or yarn
 
-## Getting Started
+## 🚀 Getting Started
 
 ### 1. Clone the Repository
 
@@ -48,13 +77,13 @@ npm install
 
 ### 3. Set Up Environment Variables
 
-Create a `.env.local` file in the root directory:
+Create a `.env.local` file:
 
 ```env
 # Database
-DATABASE_URL="postgres://postgres:YOUR_PASSWORD@your-host:5432/your-database"
+DATABASE_URL="postgresql://user:password@localhost:5432/boatbnb"
 
-# App
+# App URLs
 APP_URL="http://localhost:3000"
 NEXTAUTH_URL="http://localhost:3000"
 NEXTAUTH_SECRET="your-generated-secret-here"
@@ -62,41 +91,22 @@ NEXTAUTH_SECRET="your-generated-secret-here"
 # OAuth Providers (optional)
 GOOGLE_CLIENT_ID=""
 GOOGLE_CLIENT_SECRET=""
-
 FACEBOOK_CLIENT_ID=""
 FACEBOOK_CLIENT_SECRET=""
-
-# Map Token (not required for OpenStreetMap)
-MAP_TOKEN=""
 ```
 
-**Important**: Replace `NEXTAUTH_SECRET` with a strong random string. You can generate one with:
-
+**Generate NEXTAUTH_SECRET**:
 ```bash
 openssl rand -base64 32
 ```
 
 ### 4. Set Up the Database
 
-Run Prisma migrations to create the database schema and seed test data:
-
-```bash
-npx prisma migrate deploy
-```
-
-Or for development:
+Run migrations to create the schema:
 
 ```bash
 npx prisma migrate dev
 ```
-
-This will automatically create:
-- **3 test users**:
-  - `mario.rossi@example.com` (password: `password123`)
-  - `giulia.bianchi@example.com` (password: `password123`)
-  - `admin@gearbnb.com` (password: `admin123`, role: ADMIN)
-- **10 test equipment items** covering various sports (skiing, cycling, surfing, etc.)
-- **Sample reviews and bookings** to demonstrate the platform functionality
 
 ### 5. Generate Prisma Client
 
@@ -104,265 +114,313 @@ This will automatically create:
 npx prisma generate
 ```
 
-### 6. Run the Development Server
+### 6. Run Development Server
 
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+Open [http://localhost:3000](http://localhost:3000)
 
-## Database Schema
+## 📊 Database Schema
 
-The application uses the following database models:
+### Core Models
 
-- **User**: User accounts with authentication
-- **Equipment**: Sports equipment listings
-- **Booking**: Rental bookings
-- **Review**: Equipment reviews and ratings
-- **Account/Session**: NextAuth.js authentication tables
+#### User Roles
+- **USER**: Regular customers who rent boats
+- **OWNER**: Boat owners who list their fleet
+- **SKIPPER**: Professional skippers available for hire
+- **ADMIN**: System administrators
 
-### Test Data
+#### Boat Types
+- Sailboat, Motorboat, Catamaran, Yacht, RIB, Speedboat, Fishing
 
-The database includes pre-populated test data for development and testing:
+#### License Types
+- NONE, BASIC, COASTAL, OFFSHORE, PROFESSIONAL
 
-**Test Users:**
-| Email | Password | Role | Description |
-|-------|----------|------|-------------|
-| mario.rossi@example.com | password123 | USER | Test user with skiing and surfing equipment |
-| giulia.bianchi@example.com | password123 | USER | Test user with cycling and diving equipment |
-| admin@gearbnb.com | admin123 | ADMIN | Administrator account |
+#### Booking Status Flow
+```
+QUOTE → PENDING → CONFIRMED → COMPLETED
+                ↓
+            CANCELLED / REJECTED
+```
 
-**Test Equipment:**
-- 10 diverse sports equipment items across multiple categories:
-  - Skiing: Rossignol skis, Burton snowboard
-  - Cycling: Trek mountain bike, Bianchi road bike
-  - Water sports: Surfboard, sea kayak
-  - Tennis: Wilson racquet
-  - Hiking: Complete trekking kit
-  - Climbing: Full climbing gear set
-  - Diving: Complete scuba equipment
+### Key Features
 
-All equipment includes Italian descriptions, realistic locations across Italy, and sample images.
+- **License Validation**: Automatic checking for bareboat rentals
+- **Skipper Assignment**: Optional professional skipper booking
+- **Dynamic Pricing**: Base price + extras + skipper rates
+- **Review System**: Multi-target reviews (boat/skipper/renter)
+- **Availability Management**: Calendar-based booking conflicts
+- **Payment Integration**: Ready for real payment processor
+
+## 🔌 API Endpoints
+
+### Authentication
+```
+POST /api/auth/signup              # Register new user
+POST /api/auth/signin              # Sign in
+GET  /api/auth/signout             # Sign out
+```
+
+### Users
+```
+GET   /api/users/me                # Get current user profile
+PATCH /api/users/me                # Update user profile
+```
+
+### Boats
+```
+GET    /api/boats                  # Search boats (filters: type, price, location, dates)
+POST   /api/boats                  # Create boat (owner/admin)
+GET    /api/boats/[id]             # Get boat details
+PATCH  /api/boats/[id]             # Update boat (owner)
+DELETE /api/boats/[id]             # Delete/deactivate boat (owner)
+```
+
+### Bookings
+```
+GET    /api/bookings               # List user bookings (filters: status, asOwner, asSkipper)
+POST   /api/bookings               # Create booking
+GET    /api/bookings/[id]          # Get booking details
+PATCH  /api/bookings/[id]          # Update booking status (owner/admin)
+DELETE /api/bookings/[id]          # Cancel booking (renter)
+POST   /api/bookings/quote         # Calculate price quote
+```
+
+### Skippers
+```
+GET   /api/skippers                # Search skippers (filters: rating, experience, dates)
+POST  /api/skippers                # Create skipper profile
+GET   /api/skippers/[id]           # Get skipper details
+PATCH /api/skippers/[id]           # Update skipper profile
+```
+
+### Payments
+```
+GET   /api/payments                # List user payments
+POST  /api/payments                # Process payment (mock)
+GET   /api/payments/[id]           # Get payment details
+```
+
+### Reviews
+```
+GET    /api/reviews                # List reviews (filter by target)
+POST   /api/reviews                # Create review
+GET    /api/reviews/[id]           # Get review details
+PATCH  /api/reviews/[id]           # Update review (author)
+DELETE /api/reviews/[id]           # Delete review (author)
+```
+
+## 🔐 Authorization Matrix
+
+| Endpoint | USER | OWNER | SKIPPER | ADMIN |
+|----------|------|-------|---------|-------|
+| Create Boat | ❌ | ✅ | ❌ | ✅ |
+| Update Own Boat | ❌ | ✅ | ❌ | ✅ |
+| Create Booking | ✅ | ✅ | ✅ | ✅ |
+| Update Booking Status | ❌ | ✅ (own boats) | ❌ | ✅ |
+| Create Skipper Profile | ❌ | ❌ | ✅ | ✅ |
+| Create Review | ✅ (after booking) | ✅ | ✅ | ✅ |
+
+## 💼 Business Logic
+
+### Booking Workflow
+
+1. **Quote Calculation**
+   - Calculate days from date range
+   - Apply weekly discount if applicable
+   - Add skipper rate (if selected)
+   - Add extras with quantity and pricing type
+   - Return detailed breakdown
+
+2. **Validation**
+   - Check boat availability (no conflicts)
+   - Verify license for bareboat rentals
+   - Validate skipper availability (if selected)
+   - Prevent self-rental (owner cannot rent own boat)
+
+3. **Booking Creation**
+   - Status starts as PENDING
+   - Lock prices at booking time
+   - Create booking extras records
+   - Await payment/owner confirmation
+
+4. **Payment Processing**
+   - Mock payment with 90% success rate
+   - On success: status → CONFIRMED
+   - Creates payment record
+   - Ready for real payment gateway integration
+
+### License Validation
+
+```typescript
+Hierarchy: NONE < BASIC < COASTAL < OFFSHORE < PROFESSIONAL
+
+Bareboat Rental:
+- Boat requires COASTAL license
+- Renter has BASIC license
+- Result: ❌ Validation fails
+
+With Skipper:
+- No license validation required
+- Skipper manages navigation
+```
+
+### Review System
+
+- **Anti-Self-Review**: Users cannot review themselves
+- **Booking Verification**: Reviews only for completed bookings
+- **Multi-Target**: Rate boats, skippers, and renters separately
+- **One Review Per Target**: Prevents duplicate reviews
+- **Rating Aggregation**: Automatic average calculation
+
+## 🌍 Internationalization
+
+Supported languages:
+- 🇬🇧 English (en)
+- 🇮🇹 Italian (it)
+
+Translation files in `messages/` directory.
+
+## 🛠️ Development
+
+### Available Scripts
+
+```bash
+npm run dev          # Start development server
+npm run build        # Build for production
+npm run start        # Start production server
+npm run lint         # Run ESLint
+npm run db:migrate   # Run migrations
+npm run db:reset     # Reset database (destructive)
+npm run db:studio    # Open Prisma Studio
+```
 
 ### Database Commands
 
-- **Run migrations**: `npm run db:migrate`
-- **Reset database** (⚠️ destructive): `npm run db:reset`
-- **Open Prisma Studio**: `npm run db:studio`
-
-## Multilingual Support
-
-The application supports multiple languages out of the box:
-
-- **English** (en)
-- **Italian** (it)
-
-### Adding a New Language
-
-1. Create a new translation file in `messages/`:
-
 ```bash
-cp messages/en.json messages/fr.json
+# Create a new migration
+npx prisma migrate dev --name description
+
+# Apply migrations to production
+npx prisma migrate deploy
+
+# Reset database (dev only)
+npx prisma migrate reset
+
+# Open database GUI
+npx prisma studio
 ```
 
-2. Translate all strings in the new file
+## 🔒 Security Features
 
-3. Update `i18n.ts` to include the new locale:
+- ✅ Role-based access control (RBAC)
+- ✅ JWT session management
+- ✅ Password hashing (bcrypt)
+- ✅ Input validation (Zod)
+- ✅ SQL injection protection (Prisma)
+- ✅ XSS protection (React)
+- ✅ CSRF protection (NextAuth)
+- ✅ Authorization checks on all endpoints
+- ✅ License validation for safe rentals
 
-```typescript
-export const locales = ['en', 'it', 'fr'];
-```
+## 📦 Deployment
 
-4. Update `middleware.ts` to match the new locale in the route matcher
+### Environment Variables
 
-## OAuth Setup
+| Variable | Description | Required | Default |
+|----------|-------------|----------|---------|
+| `DATABASE_URL` | PostgreSQL connection string | Yes | - |
+| `APP_URL` | Application URL | Yes | - |
+| `NEXTAUTH_URL` | NextAuth URL (same as APP_URL) | Yes | - |
+| `NEXTAUTH_SECRET` | Secret for JWT signing | Yes | - |
+| `GOOGLE_CLIENT_ID` | Google OAuth Client ID | No | - |
+| `GOOGLE_CLIENT_SECRET` | Google OAuth Secret | No | - |
+| `FACEBOOK_CLIENT_ID` | Facebook App ID | No | - |
+| `FACEBOOK_CLIENT_SECRET` | Facebook App Secret | No | - |
 
-### Google OAuth
-
-1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-2. Create a new project or select an existing one
-3. Enable Google+ API
-4. Create OAuth 2.0 credentials
-5. Add authorized redirect URI: `http://localhost:3000/api/auth/callback/google`
-6. Copy the Client ID and Client Secret to your `.env.local`
-
-### Facebook OAuth
-
-1. Go to [Facebook Developers](https://developers.facebook.com/)
-2. Create a new app
-3. Add Facebook Login product
-4. Configure OAuth redirect URI: `http://localhost:3000/api/auth/callback/facebook`
-5. Copy the App ID and App Secret to your `.env.local`
-
-## Deployment to Dokku
-
-This application is configured for deployment to Dokku using GitHub Actions.
-
-### Dokku Server Setup
-
-On your Dokku server, set the required environment variables:
+### Dokku Deployment
 
 ```bash
-dokku config:set apps DATABASE_URL="postgres://postgres:c9a811a2f303e0d57cac5c717ca7874d@dokku-postgres-valenteapps-db:5432/valenteapps_db"
-dokku config:set apps NEXTAUTH_SECRET="your-production-secret"
-dokku config:set apps NEXTAUTH_URL="https://your-domain.com"
+# Set environment variables
+dokku config:set apps DATABASE_URL="..."
+dokku config:set apps NEXTAUTH_SECRET="..."
 dokku config:set apps APP_URL="https://your-domain.com"
-```
 
-If using OAuth providers:
+# Deploy
+git push dokku main
 
-```bash
-dokku config:set apps GOOGLE_CLIENT_ID="your-google-client-id"
-dokku config:set apps GOOGLE_CLIENT_SECRET="your-google-client-secret"
-dokku config:set apps FACEBOOK_CLIENT_ID="your-facebook-client-id"
-dokku config:set apps FACEBOOK_CLIENT_SECRET="your-facebook-client-secret"
-```
-
-**Important: Run Database Migrations on First Deploy**
-
-After the first successful deploy, you need to run migrations on the Dokku server:
-
-```bash
-# SSH into the Dokku server or run via dokku command
+# Run migrations
 dokku run apps npm run db:migrate
 ```
 
-This will create all the necessary database tables and populate the database with test data (3 test users, 10 equipment items, sample reviews and bookings). You only need to run this once for the initial setup, or when you add new migrations.
-
-**Note:** The test data is useful for development and demo purposes. For production, you may want to create a separate migration without test data or manually remove test entries after deployment.
-
-### GitHub Actions Workflow
-
-The repository includes a GitHub Actions workflow at `.github/workflows/deploy.yml` that automatically deploys to Dokku when you push to the `main` branch.
-
-**Required GitHub Secret:**
-
-- `DOKKU_SSH_KEY`: SSH private key for deploying to Dokku (already configured)
-
-The workflow:
-1. Checks out the code
-2. Sets up SSH with the Dokku server
-3. Pushes the code to Dokku
-4. Dokku automatically builds and deploys the application
-
-### Manual Deployment
-
-If you need to deploy manually:
+## 🧪 Testing
 
 ```bash
-git remote add dokku dokku@164.68.99.198:apps
-git push dokku main
+# Run linter
+npm run lint
+
+# Build check
+npm run build
+
+# Test endpoints (coming soon)
+npm test
 ```
 
-## Project Structure
+## 📝 API Response Format
 
-```
-valentepro-apps/
-├── app/                      # Next.js App Router
-│   ├── api/                  # API routes
-│   │   ├── auth/            # Authentication endpoints
-│   │   ├── equipment/       # Equipment CRUD
-│   │   ├── bookings/        # Booking management
-│   │   ├── reviews/         # Review management
-│   │   └── users/           # User profile
-│   ├── [locale]/            # Internationalized pages
-│   │   ├── auth/            # Login/signup pages
-│   │   ├── equipment/       # Equipment detail page
-│   │   ├── dashboard/       # User dashboard
-│   │   └── page.tsx         # Home/explore page
-│   └── globals.css          # Global styles
-├── components/              # React components
-│   ├── Header.tsx           # Navigation header
-│   ├── Logo.tsx             # Gearbnb logo
-│   ├── LanguageSwitcher.tsx # Language toggle
-│   ├── Map.tsx              # Leaflet map component
-│   └── EquipmentCard.tsx    # Equipment card
-├── lib/                     # Utilities
-│   ├── prisma.ts            # Prisma client
-│   └── auth.ts              # NextAuth configuration
-├── messages/                # Translation files
-│   ├── en.json              # English translations
-│   └── it.json              # Italian translations
-├── prisma/                  # Database
-│   └── schema.prisma        # Database schema
-├── .github/workflows/       # CI/CD
-│   └── deploy.yml           # Dokku deployment
-├── i18n.ts                  # i18n configuration
-├── middleware.ts            # Next.js middleware
-├── Procfile                 # Dokku process file
-├── .env.example             # Environment variables template
-└── package.json             # Dependencies and scripts
+All API endpoints return consistent JSON responses:
+
+```typescript
+// Success
+{
+  "success": true,
+  "data": { ... }
+}
+
+// Error
+{
+  "success": false,
+  "error": {
+    "message": "Error description",
+    "code": "ERROR_CODE",
+    "details": { ... }  // Optional validation details
+  }
+}
 ```
 
-## Available Scripts
+## 🎯 Future Enhancements
 
-- `npm run dev`: Start development server
-- `npm run build`: Build for production
-- `npm run start`: Start production server
-- `npm run lint`: Run ESLint
-- `npm run db:migrate`: Run Prisma migrations
-- `npm run db:reset`: Reset database (destructive)
-- `npm run db:studio`: Open Prisma Studio
+- [ ] Real payment gateway integration (Stripe/PayPal)
+- [ ] Email notifications for bookings
+- [ ] Calendar sync (iCal/Google Calendar)
+- [ ] Advanced search filters
+- [ ] Favorite boats feature
+- [ ] Chat system between renters and owners
+- [ ] Insurance integration
+- [ ] Weather API integration
+- [ ] Multi-currency support
+- [ ] Mobile app (React Native)
 
-## API Endpoints
+## 📄 License
 
-### Authentication
-- `POST /api/auth/signup` - Register new user
-- `POST /api/auth/signin` - Sign in (via NextAuth)
-- `GET /api/auth/signout` - Sign out
+Private and proprietary.
 
-### Users
-- `GET /api/users/me` - Get current user profile
-- `PATCH /api/users/me` - Update user profile
-
-### Equipment
-- `GET /api/equipment` - List equipment (with filters)
-- `POST /api/equipment` - Create equipment (auth required)
-- `GET /api/equipment/[id]` - Get equipment details
-- `PATCH /api/equipment/[id]` - Update equipment (owner only)
-- `DELETE /api/equipment/[id]` - Delete equipment (owner only)
-
-### Bookings
-- `GET /api/bookings` - List user's bookings
-- `POST /api/bookings` - Create booking (auth required)
-
-### Reviews
-- `GET /api/reviews?equipmentId=[id]` - List equipment reviews
-- `POST /api/reviews` - Create review (auth required)
-- `PATCH /api/reviews/[id]` - Update review (author only)
-- `DELETE /api/reviews/[id]` - Delete review (author only)
-
-## Environment Variables Reference
-
-| Variable | Description | Required | Example |
-|----------|-------------|----------|---------|
-| `DATABASE_URL` | PostgreSQL connection string | Yes | `postgres://user:pass@host:5432/db` |
-| `APP_URL` | Application URL | Yes | `http://localhost:3000` |
-| `NEXTAUTH_URL` | NextAuth URL (same as APP_URL) | Yes | `http://localhost:3000` |
-| `NEXTAUTH_SECRET` | Secret for NextAuth | Yes | Random string |
-| `GOOGLE_CLIENT_ID` | Google OAuth Client ID | No | From Google Console |
-| `GOOGLE_CLIENT_SECRET` | Google OAuth Secret | No | From Google Console |
-| `FACEBOOK_CLIENT_ID` | Facebook App ID | No | From Facebook Developers |
-| `FACEBOOK_CLIENT_SECRET` | Facebook App Secret | No | From Facebook Developers |
-| `MAP_TOKEN` | Map provider token (if needed) | No | Not used with OpenStreetMap |
-
-## Contributing
+## 🤝 Contributing
 
 1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
 3. Commit your changes (`git commit -m 'Add amazing feature'`)
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## License
+## 💬 Support
 
-This project is private and proprietary.
-
-## Support
-
-For issues or questions, please open an issue on GitHub or contact the development team.
+For issues or questions:
+- Open an issue on GitHub
+- Contact the development team
 
 ---
 
-Built with ❤️ using Next.js and TypeScript
+Built with ❤️ for the boating community | Powered by Next.js, TypeScript, and Prisma
