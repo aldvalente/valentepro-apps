@@ -21,19 +21,35 @@ export {
   AvailabilityStatus,
 } from '@prisma/client';
 
+// Import types for use in interfaces
+import type {
+  User,
+  Boat,
+  Booking,
+  Review,
+  Payment,
+  BoatAvailability,
+  BoatExtra,
+  BookingExtra,
+  UserRole,
+  BookingStatus,
+  PaymentStatus,
+  LicenseType,
+  BoatType,
+  AvailabilityStatus,
+} from '@prisma/client';
+
 // Extended types with relations
 export interface UserWithRelations extends User {
   ownedBoats?: Boat[];
   bookingsAsRenter?: Booking[];
   skipperBookings?: Booking[];
   reviews?: Review[];
-  receivedReviews?: Review[];
 }
 
 export interface BoatWithRelations extends Boat {
   owner?: User;
   bookings?: Booking[];
-  reviews?: Review[];
   availabilities?: BoatAvailability[];
   extras?: BoatExtra[];
   avgRating?: number;
@@ -51,8 +67,6 @@ export interface BookingWithRelations extends Booking {
 
 export interface ReviewWithRelations extends Review {
   author?: User;
-  target?: User | null;
-  boat?: Boat | null;
   booking?: Booking;
 }
 

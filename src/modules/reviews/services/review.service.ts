@@ -18,7 +18,7 @@ export class ReviewService {
   async createReview(
     authorId: string,
     data: CreateReviewRequest
-  ): Promise<ReviewWithRelations> {
+  ): Promise<any> {
     const { bookingId, targetId, targetType, rating, comment } = data;
 
     // Get booking details
@@ -154,7 +154,7 @@ export class ReviewService {
   /**
    * Get review by ID
    */
-  async getReviewById(id: string): Promise<ReviewWithRelations> {
+  async getReviewById(id: string): Promise<any> {
     const review = await prisma.review.findUnique({
       where: { id },
       include: {
@@ -252,7 +252,7 @@ export class ReviewService {
     id: string,
     authorId: string,
     data: { rating?: number; comment?: string }
-  ): Promise<ReviewWithRelations> {
+  ): Promise<any> {
     const review = await this.getReviewById(id);
 
     if (review.authorId !== authorId) {

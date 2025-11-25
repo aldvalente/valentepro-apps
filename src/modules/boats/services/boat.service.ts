@@ -16,7 +16,7 @@ export class BoatService {
   /**
    * Create a new boat listing
    */
-  async createBoat(ownerId: string, data: CreateBoatRequest): Promise<BoatWithRelations> {
+  async createBoat(ownerId: string, data: CreateBoatRequest): Promise<any> {
     const boat = await prisma.boat.create({
       data: {
         ...data,
@@ -40,7 +40,7 @@ export class BoatService {
   /**
    * Get boat by ID with relations
    */
-  async getBoatById(id: string, includeInactive = false): Promise<BoatWithRelations> {
+  async getBoatById(id: string, includeInactive = false): Promise<any> {
     const boat = await prisma.boat.findUnique({
       where: { id },
       include: {
@@ -63,19 +63,6 @@ export class BoatService {
           orderBy: { startDate: 'asc' },
           take: 10,
         },
-        reviews: {
-          include: {
-            author: {
-              select: {
-                id: true,
-                name: true,
-                image: true,
-              },
-            },
-          },
-          orderBy: { createdAt: 'desc' },
-          take: 10,
-        },
       },
     });
 
@@ -83,16 +70,36 @@ export class BoatService {
       throw new NotFoundError('Boat not found');
     }
 
+    // Fetch reviews separately (polymorphic relation)
+    const reviews = await prisma.review.findMany({
+      where: {
+        targetId: id,
+        targetType: 'boat',
+      },
+      include: {
+        author: {
+          select: {
+            id: true,
+            name: true,
+            image: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 10,
+    });
+
     // Calculate average rating
     const avgRating =
-      boat.reviews.length > 0
-        ? boat.reviews.reduce((sum, r) => sum + r.rating, 0) / boat.reviews.length
+      reviews.length > 0
+        ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
         : 0;
 
     return {
       ...boat,
+      reviews,
       avgRating: Math.round(avgRating * 10) / 10,
-      reviewCount: boat.reviews.length,
+      reviewCount: reviews.length,
     };
   }
 
@@ -101,7 +108,7 @@ export class BoatService {
    */
   async searchBoats(
     filters: BoatSearchFilters & { page?: number; limit?: number }
-  ): Promise<PaginatedResponse<BoatWithRelations>> {
+  ): Promise<any> {
     const {
       boatType,
       minPrice,
@@ -189,9 +196,6 @@ export class BoatService {
               email: true,
             },
           },
-          reviews: {
-            select: { rating: true },
-          },
           extras: {
             where: { isActive: true },
             select: { id: true, name: true, price: true, priceType: true },
@@ -204,16 +208,37 @@ export class BoatService {
       prisma.boat.count({ where }),
     ]);
 
+    // Fetch reviews for all boats
+    const boatIds = boats.map((b) => b.id);
+    const allReviews = await prisma.review.findMany({
+      where: {
+        targetId: { in: boatIds },
+        targetType: 'boat',
+      },
+      select: {
+        targetId: true,
+        rating: true,
+      },
+    });
+
+    // Group reviews by boat
+    const reviewsByBoat = allReviews.reduce((acc, review) => {
+      if (!acc[review.targetId]) acc[review.targetId] = [];
+      acc[review.targetId].push(review);
+      return acc;
+    }, {} as Record<string, typeof allReviews>);
+
     // Add rating stats
     const boatsWithStats = boats.map((boat) => {
+      const boatReviews = reviewsByBoat[boat.id] || [];
       const avgRating =
-        boat.reviews.length > 0
-          ? boat.reviews.reduce((sum, r) => sum + r.rating, 0) / boat.reviews.length
+        boatReviews.length > 0
+          ? boatReviews.reduce((sum, r) => sum + r.rating, 0) / boatReviews.length
           : 0;
       return {
         ...boat,
         avgRating: Math.round(avgRating * 10) / 10,
-        reviewCount: boat.reviews.length,
+        reviewCount: boatReviews.length,
       };
     });
 
@@ -235,7 +260,7 @@ export class BoatService {
     id: string,
     ownerId: string,
     data: UpdateBoatRequest
-  ): Promise<BoatWithRelations> {
+  ): Promise<any> {
     const boat = await this.getBoatById(id, true);
 
     if (boat.ownerId !== ownerId) {
@@ -292,7 +317,7 @@ export class BoatService {
   /**
    * Get owner's boats
    */
-  async getOwnerBoats(ownerId: string): Promise<BoatWithRelations[]> {
+  async getOwnerBoats(ownerId: string): Promise<any[]> {
     const boats = await prisma.boat.findMany({
       where: { ownerId },
       include: {
@@ -314,22 +339,40 @@ export class BoatService {
             status: true,
           },
         },
-        reviews: {
-          select: { rating: true },
-        },
       },
       orderBy: { createdAt: 'desc' },
     });
 
+    // Fetch reviews for all boats
+    const boatIds = boats.map((b) => b.id);
+    const allReviews = await prisma.review.findMany({
+      where: {
+        targetId: { in: boatIds },
+        targetType: 'boat',
+      },
+      select: {
+        targetId: true,
+        rating: true,
+      },
+    });
+
+    // Group reviews by boat
+    const reviewsByBoat = allReviews.reduce((acc, review) => {
+      if (!acc[review.targetId]) acc[review.targetId] = [];
+      acc[review.targetId].push(review);
+      return acc;
+    }, {} as Record<string, typeof allReviews>);
+
     return boats.map((boat) => {
+      const boatReviews = reviewsByBoat[boat.id] || [];
       const avgRating =
-        boat.reviews.length > 0
-          ? boat.reviews.reduce((sum, r) => sum + r.rating, 0) / boat.reviews.length
+        boatReviews.length > 0
+          ? boatReviews.reduce((sum, r) => sum + r.rating, 0) / boatReviews.length
           : 0;
       return {
         ...boat,
         avgRating: Math.round(avgRating * 10) / 10,
-        reviewCount: boat.reviews.length,
+        reviewCount: boatReviews.length,
       };
     });
   }

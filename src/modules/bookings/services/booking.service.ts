@@ -121,7 +121,7 @@ export class BookingService {
   async createBooking(
     renterId: string,
     data: CreateBookingRequest
-  ): Promise<BookingWithRelations> {
+  ): Promise<any> {
     const { boatId, startDate, endDate, withSkipper, skipperId, extras, renterNotes } = data;
 
     // Get boat and renter details
@@ -262,7 +262,7 @@ export class BookingService {
     }
 
     // Validate license level (simplified hierarchy)
-    const licenseHierarchy = {
+    const licenseHierarchy: Record<string, number> = {
       NONE: 0,
       BASIC: 1,
       COASTAL: 2,
@@ -270,7 +270,10 @@ export class BookingService {
       PROFESSIONAL: 4,
     };
 
-    if (licenseHierarchy[renter.licenseType] < licenseHierarchy[requiredLicense]) {
+    const renterLevel = licenseHierarchy[renter.licenseType] || 0;
+    const requiredLevel = licenseHierarchy[requiredLicense] || 0;
+
+    if (renterLevel < requiredLevel) {
       throw new ValidationError(
         `This boat requires a ${requiredLicense} license or higher. You have ${renter.licenseType}.`
       );
@@ -319,7 +322,7 @@ export class BookingService {
   /**
    * Get booking by ID
    */
-  async getBookingById(id: string, userId?: string): Promise<BookingWithRelations> {
+  async getBookingById(id: string, userId?: string): Promise<any> {
     const booking = await prisma.booking.findUnique({
       where: { id },
       include: {
@@ -388,7 +391,7 @@ export class BookingService {
   async getUserBookings(
     userId: string,
     filters: any = {}
-  ): Promise<PaginatedResponse<BookingWithRelations>> {
+  ): Promise<any> {
     const { status, asOwner, asSkipper, page = 1, limit = 20 } = filters;
     const skip = (page - 1) * limit;
 
@@ -470,7 +473,7 @@ export class BookingService {
     userRole: string,
     status: BookingStatus,
     ownerNotes?: string
-  ): Promise<BookingWithRelations> {
+  ): Promise<any> {
     const booking = await this.getBookingById(bookingId);
 
     // Check permissions
@@ -504,7 +507,7 @@ export class BookingService {
   /**
    * Cancel booking (renter only)
    */
-  async cancelBooking(bookingId: string, userId: string): Promise<BookingWithRelations> {
+  async cancelBooking(bookingId: string, userId: string): Promise<any> {
     const booking = await this.getBookingById(bookingId, userId);
 
     if (booking.renterId !== userId) {

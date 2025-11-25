@@ -69,7 +69,7 @@ export class SkipperService {
   /**
    * Get skipper by ID
    */
-  async getSkipperById(id: string): Promise<UserWithRelations> {
+  async getSkipperById(id: string): Promise<any> {
     const skipper = await prisma.user.findUnique({
       where: { id },
       include: {
@@ -104,22 +104,6 @@ export class SkipperService {
           orderBy: { createdAt: 'desc' },
           take: 10,
         },
-        receivedReviews: {
-          where: {
-            targetType: 'skipper',
-          },
-          include: {
-            author: {
-              select: {
-                id: true,
-                name: true,
-                image: true,
-              },
-            },
-          },
-          orderBy: { createdAt: 'desc' },
-          take: 10,
-        },
       },
     });
 
@@ -127,7 +111,29 @@ export class SkipperService {
       throw new NotFoundError('Skipper not found');
     }
 
-    return skipper;
+    // Manually fetch reviews for the skipper
+    const reviews = await prisma.review.findMany({
+      where: {
+        targetType: 'skipper',
+        targetId: id,
+      },
+      include: {
+        author: {
+          select: {
+            id: true,
+            name: true,
+            image: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 10,
+    });
+
+    return {
+      ...skipper,
+      receivedReviews: reviews,
+    } as any;
   }
 
   /**

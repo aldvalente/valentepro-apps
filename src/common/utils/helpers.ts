@@ -73,7 +73,7 @@ export function formatBoatName(name: string): string {
 export function parseSearchParams(searchParams: URLSearchParams): Record<string, any> {
   const params: Record<string, any> = {};
   
-  for (const [key, value] of searchParams.entries()) {
+  searchParams.forEach((value, key) => {
     // Try to parse numbers
     if (!isNaN(Number(value))) {
       params[key] = Number(value);
@@ -86,7 +86,7 @@ export function parseSearchParams(searchParams: URLSearchParams): Record<string,
     else {
       params[key] = value;
     }
-  }
+  });
   
   return params;
 }

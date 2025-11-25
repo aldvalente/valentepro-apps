@@ -90,7 +90,6 @@ model User {
   bookingsAsRenter  Booking[]        @relation("BookingRenter")
   skipperBookings   Booking[]        @relation("BookingSkipper")
   reviews           Review[]         @relation("ReviewAuthor")
-  receivedReviews   Review[]         @relation("ReviewTarget")
   payments          Payment[]
   accounts          Account[]
   sessions          Session[]
@@ -185,7 +184,6 @@ model Boat {
   // Relations
   owner           User              @relation("BoatOwner", fields: [ownerId], references: [id], onDelete: Cascade)
   bookings        Booking[]
-  reviews         Review[]          @relation("BoatReviews")
   availabilities  BoatAvailability[]
   extras          BoatExtra[]
 
@@ -329,7 +327,7 @@ model Review {
   id          String   @id @default(cuid())
   bookingId   String
   authorId    String   // User who wrote the review
-  targetId    String   // User/Boat being reviewed
+  targetId    String   // User/Boat being reviewed (polymorphic)
   targetType  String   // "boat", "skipper", "renter"
   
   rating      Int      // 1-5 stars
@@ -344,8 +342,8 @@ model Review {
   // Relations
   booking     Booking  @relation("BookingReviews", fields: [bookingId], references: [id], onDelete: Cascade)
   author      User     @relation("ReviewAuthor", fields: [authorId], references: [id], onDelete: Cascade)
-  target      User?    @relation("ReviewTarget", fields: [targetId], references: [id], onDelete: Cascade)
-  boat        Boat?    @relation("BoatReviews", fields: [targetId], references: [id], onDelete: Cascade)
+  // Note: targetId is polymorphic and can reference User or Boat based on targetType
+  // We cannot create explicit foreign key relations for polymorphic references
 
   @@index([bookingId])
   @@index([authorId])

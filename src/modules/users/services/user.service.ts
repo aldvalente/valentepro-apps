@@ -45,7 +45,7 @@ export class UserService {
   /**
    * Get user by ID
    */
-  async getUserById(id: string, includeRelations = false): Promise<UserWithRelations> {
+  async getUserById(id: string, includeRelations = false): Promise<any> {
     const user = await prisma.user.findUnique({
       where: { id },
       include: includeRelations
