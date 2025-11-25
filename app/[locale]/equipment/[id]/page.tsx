@@ -39,7 +39,7 @@ interface Equipment {
   reviewCount: number;
 }
 
-export default function EquipmentDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default function EquipmentDetailPage({ params }: { params: { id: string } }) {
   const { data: session } = useSession();
   const router = useRouter();
   const t = useTranslations('equipment');
@@ -48,12 +48,7 @@ export default function EquipmentDetailPage({ params }: { params: Promise<{ id: 
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [bookingLoading, setBookingLoading] = useState(false);
-  const [equipmentId, setEquipmentId] = useState<string | null>(null);
-
-  // Unwrap params
-  useEffect(() => {
-    params.then(p => setEquipmentId(p.id));
-  }, [params]);
+  const [equipmentId, setEquipmentId] = useState<string | null>(params.id ?? null);
 
   useEffect(() => {
     if (equipmentId) {
