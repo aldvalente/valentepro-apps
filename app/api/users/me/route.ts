@@ -1,74 +1,32 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
-import { z } from 'zod';
-
-const updateUserSchema = z.object({
-  name: z.string().min(1).optional(),
-});
+// Users API - Current user profile
+import { NextRequest } from 'next/server';
+import { userService } from '@/src/modules/users/services/user.service';
+import { updateUserSchema } from '@/src/modules/users/validators/user.validator';
+import { requireAuth } from '@/src/common/middleware/auth';
+import { handleError, successResponse } from '@/src/common/middleware/error-handler';
 
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions);
+    const auth = await requireAuth();
+    const user = await userService.getUserById(auth.userId, true);
+    const stats = await userService.getUserStats(auth.userId);
     
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const user = await prisma.user.findUnique({
-      where: { id: (session.user as any).id },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        createdAt: true,
-      },
-    });
-
-    return NextResponse.json(user);
+    return successResponse({ ...user, stats });
   } catch (error) {
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleError(error);
   }
 }
 
 export async function PATCH(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
+    const auth = await requireAuth();
     const body = await req.json();
-    const { name } = updateUserSchema.parse(body);
-
-    const user = await prisma.user.update({
-      where: { id: (session.user as any).id },
-      data: { name },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-      },
-    });
-
-    return NextResponse.json(user);
+    
+    const data = updateUserSchema.parse(body);
+    const user = await userService.updateUser(auth.userId, data);
+    
+    return successResponse(user);
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: 'Invalid input', details: error.errors },
-        { status: 400 }
-      );
-    }
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleError(error);
   }
 }

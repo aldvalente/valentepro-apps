@@ -1,7 +1,7 @@
-// Reviews API - Get, update, delete specific review
+// Boats API - Get, Update, Delete specific boat
 import { NextRequest } from 'next/server';
-import { reviewService } from '@/src/modules/reviews/services/review.service';
-import { updateReviewSchema } from '@/src/modules/reviews/validators/review.validator';
+import { boatService } from '@/src/modules/boats/services/boat.service';
+import { updateBoatSchema } from '@/src/modules/boats/validators/boat.validator';
 import { requireAuth } from '@/src/common/middleware/auth';
 import { handleError, successResponse } from '@/src/common/middleware/error-handler';
 
@@ -10,8 +10,8 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const review = await reviewService.getReviewById(params.id);
-    return successResponse(review);
+    const boat = await boatService.getBoatById(params.id);
+    return successResponse(boat);
   } catch (error) {
     return handleError(error);
   }
@@ -25,10 +25,10 @@ export async function PATCH(
     const auth = await requireAuth();
     const body = await req.json();
     
-    const data = updateReviewSchema.parse(body);
-    const review = await reviewService.updateReview(params.id, auth.userId, data);
+    const data = updateBoatSchema.parse(body);
+    const boat = await boatService.updateBoat(params.id, auth.userId, data);
     
-    return successResponse(review);
+    return successResponse(boat);
   } catch (error) {
     return handleError(error);
   }
@@ -40,9 +40,9 @@ export async function DELETE(
 ) {
   try {
     const auth = await requireAuth();
-    await reviewService.deleteReview(params.id, auth.userId);
+    await boatService.deleteBoat(params.id, auth.userId);
     
-    return successResponse({ message: 'Review deleted successfully' });
+    return successResponse({ message: 'Boat deleted successfully' });
   } catch (error) {
     return handleError(error);
   }

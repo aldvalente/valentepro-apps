@@ -1,7 +1,7 @@
-// Reviews API - Get, update, delete specific review
+// Bookings API - Get and Update specific booking
 import { NextRequest } from 'next/server';
-import { reviewService } from '@/src/modules/reviews/services/review.service';
-import { updateReviewSchema } from '@/src/modules/reviews/validators/review.validator';
+import { bookingService } from '@/src/modules/bookings/services/booking.service';
+import { updateBookingStatusSchema } from '@/src/modules/bookings/validators/booking.validator';
 import { requireAuth } from '@/src/common/middleware/auth';
 import { handleError, successResponse } from '@/src/common/middleware/error-handler';
 
@@ -10,8 +10,10 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const review = await reviewService.getReviewById(params.id);
-    return successResponse(review);
+    const auth = await requireAuth();
+    const booking = await bookingService.getBookingById(params.id, auth.userId);
+    
+    return successResponse(booking);
   } catch (error) {
     return handleError(error);
   }
@@ -25,10 +27,16 @@ export async function PATCH(
     const auth = await requireAuth();
     const body = await req.json();
     
-    const data = updateReviewSchema.parse(body);
-    const review = await reviewService.updateReview(params.id, auth.userId, data);
+    const { status, ownerNotes } = updateBookingStatusSchema.parse(body);
+    const booking = await bookingService.updateBookingStatus(
+      params.id,
+      auth.userId,
+      auth.role,
+      status,
+      ownerNotes
+    );
     
-    return successResponse(review);
+    return successResponse(booking);
   } catch (error) {
     return handleError(error);
   }
@@ -40,9 +48,9 @@ export async function DELETE(
 ) {
   try {
     const auth = await requireAuth();
-    await reviewService.deleteReview(params.id, auth.userId);
+    const booking = await bookingService.cancelBooking(params.id, auth.userId);
     
-    return successResponse({ message: 'Review deleted successfully' });
+    return successResponse(booking);
   } catch (error) {
     return handleError(error);
   }

@@ -1,13 +1,14 @@
-import { NextRequest, NextResponse } from 'next/server';
-import bcrypt from 'bcryptjs';
-import { prisma } from '@/lib/prisma';
+// Auth Signup API
+import { NextRequest } from 'next/server';
+import { userService } from '@/src/modules/users/services/user.service';
+import { handleError, successResponse } from '@/src/common/middleware/error-handler';
 import { z } from 'zod';
 
 const signupSchema = z.object({
   name: z.string().min(1),
   email: z.string().email(),
-  password: z.string().min(6),
-  confirmPassword: z.string().min(6),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
+  confirmPassword: z.string().min(8),
 }).refine((data) => data.password === data.confirmPassword, {
   message: 'Passwords do not match',
   path: ['confirmPassword'],
@@ -18,47 +19,23 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { name, email, password } = signupSchema.parse(body);
 
-    const existingUser = await prisma.user.findUnique({
-      where: { email },
+    const user = await userService.createUser({
+      name,
+      email,
+      password,
+      role: 'USER',
     });
 
-    if (existingUser) {
-      return NextResponse.json(
-        { error: 'Email already exists' },
-        { status: 400 }
-      );
-    }
-
-    const passwordHash = await bcrypt.hash(password, 10);
-
-    const user = await prisma.user.create({
-      data: {
-        name,
-        email,
-        passwordHash,
-        emailVerified: new Date(), // considerato verificato fin da subito
-      },
-    });
-
-    return NextResponse.json(
-      { 
-        id: user.id, 
-        name: user.name, 
+    return successResponse(
+      {
+        id: user.id,
+        name: user.name,
         email: user.email,
-        message: 'Account creato con successo'
+        message: 'Account created successfully',
       },
-      { status: 201 }
+      201
     );
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: 'Invalid input', details: error.errors },
-        { status: 400 }
-      );
-    }
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleError(error);
   }
 }
