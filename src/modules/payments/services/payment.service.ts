@@ -53,7 +53,7 @@ export class PaymentService {
     }
 
     // Mock payment processing
-    const mockTransactionId = `mock_txn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const mockTransactionId = `mock_txn_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
     const paymentSuccess = Math.random() > 0.1; // 90% success rate for mock
 
     const payment = await prisma.payment.create({
@@ -213,7 +213,7 @@ export class PaymentService {
     }
 
     // Mock retry
-    const mockTransactionId = `mock_txn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const mockTransactionId = `mock_txn_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
     const paymentSuccess = Math.random() > 0.1; // 90% success rate
 
     const updated = await prisma.payment.update({
