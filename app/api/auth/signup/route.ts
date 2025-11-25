@@ -2,8 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
-import crypto from 'crypto';
-import { sendVerificationEmail } from '@/lib/email';
 
 const signupSchema = z.object({
   name: z.string().min(1),
@@ -38,29 +36,16 @@ export async function POST(req: NextRequest) {
         name,
         email,
         passwordHash,
-        emailVerified: null, // Not verified yet
+        emailVerified: new Date(), // considerato verificato fin da subito
       },
     });
-
-    const token = crypto.randomUUID();
-    const expires = new Date(Date.now() + 24 * 60 * 60 * 1000);
-
-    await prisma.verificationToken.create({
-      data: {
-        identifier: user.email,
-        token,
-        expires,
-      },
-    });
-
-    await sendVerificationEmail(user.email, token);
 
     return NextResponse.json(
       { 
         id: user.id, 
         name: user.name, 
         email: user.email,
-        message: 'Controlla la tua email per attivare l\'account'
+        message: 'Account creato con successo'
       },
       { status: 201 }
     );
