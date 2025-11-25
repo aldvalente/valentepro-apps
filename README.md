@@ -1,5 +1,6 @@
 # Gearbnb - Sports Equipment Rental Platform
 
+
 Gearbnb is a modern, full-stack Airbnb-style marketplace for renting sports equipment. Built with Next.js 14, TypeScript, Prisma, and PostgreSQL, it features full multilingual support (English and Italian) and a responsive, user-friendly interface.
 
 ## Features
