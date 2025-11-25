@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { locales } from '@/i18n';
 import AuthProvider from '@/components/AuthProvider';
 import Header from '@/components/Header';
+import CookieBanner from '@/components/CookieBanner';
 import '../globals.css';
 
 export default async function LocaleLayout({
@@ -32,6 +33,7 @@ export default async function LocaleLayout({
           <AuthProvider>
             <Header />
             <main>{children}</main>
+            <CookieBanner />
           </AuthProvider>
         </NextIntlClientProvider>
       </body>

@@ -26,7 +26,10 @@ export async function GET(req: NextRequest) {
     const where: any = { isActive: true };
 
     if (sportType && sportType !== 'all') {
-      where.sportType = sportType;
+      where.sportType = {
+        equals: sportType.toLowerCase(),
+        mode: 'insensitive',
+      };
     }
 
     if (minPrice || maxPrice) {

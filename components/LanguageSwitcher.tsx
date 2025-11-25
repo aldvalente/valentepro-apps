@@ -9,7 +9,27 @@ export default function LanguageSwitcher() {
   const pathname = usePathname();
 
   const switchLanguage = (newLocale: string) => {
-    const newPathname = pathname.replace(`/${locale}`, `/${newLocale}`);
+    if (locale === newLocale) return;
+
+    // Handle root path and paths without explicit locale prefix
+    const segments = pathname.split('/').filter(Boolean);
+
+    if (segments.length === 0) {
+      router.push(newLocale === 'en' ? '/' : `/${newLocale}`);
+      return;
+    }
+
+    // If first segment is a known locale, swap it, otherwise prefix
+    const supportedLocales = ['en', 'it'];
+    if (supportedLocales.includes(segments[0])) {
+      segments[0] = newLocale === 'en' ? '' : newLocale;
+    } else {
+      if (newLocale !== 'en') {
+        segments.unshift(newLocale);
+      }
+    }
+
+    const newPathname = '/' + segments.filter(Boolean).join('/');
     router.push(newPathname);
   };
 
